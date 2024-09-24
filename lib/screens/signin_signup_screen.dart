@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'profile_screen.dart';
+import 'package:http/http.dart' as http;
 
 class SignInSignUpScreen extends StatelessWidget {
   @override
@@ -83,14 +84,18 @@ class SignInSignUpScreen extends StatelessWidget {
                   onPressed: () async {
                     try {
                       if (rememberMe) {
-                        SharedPreferences prefs = await SharedPreferences.getInstance();
+                        SharedPreferences prefs =
+                            await SharedPreferences.getInstance();
                         await prefs.setString('email', emailController.text);
-                        await prefs.setString('password', passwordController.text);
-                        await prefs.setBool('isLoggedIn', true); // Сохранение статуса
+                        await prefs.setString(
+                            'password', passwordController.text);
+                        await prefs.setBool(
+                            'isLoggedIn', true); // Сохранение статуса
                       }
 
                       Navigator.pop(context); // Закрываем диалог
-                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => ProfileScreen()));
+                      Navigator.pushReplacement(context,
+                          MaterialPageRoute(builder: (_) => ProfileScreen()));
                     } catch (e) {
                       print('Error during sign in: $e');
                     }
@@ -113,6 +118,7 @@ class SignInSignUpScreen extends StatelessWidget {
     TextEditingController nameController = TextEditingController();
     bool rememberMe = false;
     bool isDriver = false;
+    String role = "Fellow Traveller";
 
     showDialog(
       context: context,
@@ -186,20 +192,27 @@ class SignInSignUpScreen extends StatelessWidget {
                     String password = passwordController.text;
                     String confirmPassword = confirmPasswordController.text;
 
+                    if (isDriver){
+                      role = "Driver";
+                    }
+
                     if (name.isEmpty) {
                       _showErrorDialog(context, 'Name cannot be empty.');
                     } else if (email.isEmpty) {
                       _showErrorDialog(context, 'Email cannot be empty.');
                     } else if (!_isEmailValid(email)) {
-                      _showErrorDialog(context, 'Email must contain "@" and a domain (e.g. @gmail.com).');
+                      _showErrorDialog(context,
+                          'Email must contain "@" and a domain (e.g. @gmail.com).');
                     } else if (!_isPasswordValid(password)) {
-                      _showErrorDialog(context, 'Password must be at least 8 characters long, include a digit and a special character.');
+                      _showErrorDialog(context,
+                          'Password must be at least 8 characters long, include a digit and a special character.');
                     } else if (password != confirmPassword) {
                       _showErrorDialog(context, 'Passwords do not match.');
                     } else {
                       try {
                         if (rememberMe) {
-                          SharedPreferences prefs = await SharedPreferences.getInstance();
+                          SharedPreferences prefs =
+                              await SharedPreferences.getInstance();
                           await prefs.setString('email', email);
                           await prefs.setString('password', password);
                           await prefs.setBool('isDriver', isDriver);
@@ -207,7 +220,8 @@ class SignInSignUpScreen extends StatelessWidget {
                         }
 
                         Navigator.pop(context);
-                        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => ProfileScreen()));
+                        Navigator.pushReplacement(context,
+                            MaterialPageRoute(builder: (_) => ProfileScreen()));
                       } catch (e) {
                         print('Error during sign up: $e');
                       }
