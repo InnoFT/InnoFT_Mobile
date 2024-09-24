@@ -101,7 +101,7 @@ class SignInSignUpScreen extends StatelessWidget {
     );
   }
 
-  // Диалог регистрации с переключателем "Пассажир или Водитель"
+  // Диалог регистрации с проверкой всех полей
   void _showSignUpDialog(BuildContext context) {
     TextEditingController emailController = TextEditingController();
     TextEditingController passwordController = TextEditingController();
@@ -177,22 +177,76 @@ class SignInSignUpScreen extends StatelessWidget {
                 ),
                 TextButton(
                   onPressed: () async {
-                    // Заглушка для сохранения данных в удалённую БД и локальное хранилище
-                    if (rememberMe) {
-                      SharedPreferences prefs = await SharedPreferences.getInstance();
-                      await prefs.setString('email', emailController.text);
-                      await prefs.setString('password', passwordController.text);
-                      await prefs.setBool('isDriver', isDriver); // Сохранение роли
-                      await prefs.setBool('isLoggedIn', true); // Сохранение статуса
+                    // Проверка полей
+                    String email = emailController.text;
+                    String name = nameController.text;
+                    String password = passwordController.text;
+                    String confirmPassword = confirmPasswordController.text;
+
+                    if (name.isEmpty) {
+                      _showErrorDialog(context, 'Name cannot be empty.');
+                    } else if (email.isEmpty) {
+                      _showErrorDialog(context, 'Email cannot be empty.');
+                    } else if (!_isEmailValid(email)) {
+                      _showErrorDialog(context, 'Email must contain "@" and a domain (e.g. @gmail.com).');
+                    } else if (!_isPasswordValid(password)) {
+                      _showErrorDialog(context, 'Password must be at least 8 characters long, include a digit and a special character.');
+                    } else if (password != confirmPassword) {
+                      _showErrorDialog(context, 'Passwords do not match.');
+                    } else {
+                      // Заглушка для сохранения данных в удалённую БД и локальное хранилище
+                      if (rememberMe) {
+                        SharedPreferences prefs = await SharedPreferences.getInstance();
+                        await prefs.setString('email', email);
+                        await prefs.setString('password', password);
+                        await prefs.setBool('isDriver', isDriver); // Сохранение роли
+                        await prefs.setBool('isLoggedIn', true); // Сохранение статуса
+                      }
+                      Navigator.pop(context);
+                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => ProfileScreen()));
                     }
-                    Navigator.pop(context);
-                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => ProfileScreen()));
                   },
                   child: Text('Enter'),
                 ),
               ],
             );
           },
+        );
+      },
+    );
+  }
+
+  // Проверка email на соответствие формату
+  bool _isEmailValid(String email) {
+    // Регулярное выражение для проверки наличия "@" и точки после него
+    final RegExp emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
+    return emailRegex.hasMatch(email);
+  }
+
+  // Проверка пароля на соответствие условиям
+  bool _isPasswordValid(String password) {
+    if (password.length < 8) return false;
+    bool hasDigit = password.contains(RegExp(r'\d'));
+    bool hasSpecialChar = password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
+    return hasDigit && hasSpecialChar;
+  }
+
+  // Показ окна ошибки
+  void _showErrorDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Error'),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text('OK'),
+            ),
+          ],
         );
       },
     );
