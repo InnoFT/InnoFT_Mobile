@@ -42,7 +42,7 @@ class _SplashScreenState extends State<SplashScreen> {
             Icon(Icons.directions_car, size: 100),
             SizedBox(height: 20),
             Text(
-              "Welcome to BlaBlaClone",
+              "Welcome to InnoFT",
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
           ],

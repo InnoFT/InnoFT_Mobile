@@ -1,26 +1,30 @@
 import 'package:flutter/material.dart';
-import 'screens/splash_screen.dart'; // подключение экрана приветствия
-import 'screens/profile_screen.dart'; // подключение экрана профиля
-import 'screens/signin_signup_screen.dart'; // подключение экрана входа/регистрации
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // Подключаем Riverpod
+import 'screens/signin_signup_screen.dart';
+import 'screens/profile_screen.dart';
+import 'screens/settings_screen.dart';
+import 'screens/create_trip_screen.dart';
+import 'screens/find_trip_screen.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(ProviderScope(child: MyApp())); // Оборачиваем приложение в ProviderScope
 }
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'InnoFT',
+      title: 'BlaBlaClone',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      // Настраиваем маршруты
-      initialRoute: '/',
+      initialRoute: '/signin_signup',
       routes: {
-        '/': (context) => SplashScreen(),            // Приветственный экран
-        '/signin_signup': (context) => SignInSignUpScreen(), // Экран авторизации/регистрации
-        '/profile': (context) => ProfileScreen(),    // Экран профиля после входа/регистрации
+        '/signin_signup': (context) => SignInSignUpScreen(),
+        '/profile': (context) => ProfileScreen(),
+        '/settings': (context) => SettingsScreen(),
+        '/create_trip': (context) => CreateTripScreen(),
+        '/find_trip': (context) => FindTripScreen(),
       },
     );
   }

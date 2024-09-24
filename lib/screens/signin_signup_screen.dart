@@ -81,15 +81,19 @@ class SignInSignUpScreen extends StatelessWidget {
                 ),
                 TextButton(
                   onPressed: () async {
-                    // Заглушка для проверки данных с удалённой БД
-                    if (rememberMe) {
-                      SharedPreferences prefs = await SharedPreferences.getInstance();
-                      await prefs.setString('email', emailController.text);
-                      await prefs.setString('password', passwordController.text);
-                      await prefs.setBool('isLoggedIn', true); // Сохранение статуса
+                    try {
+                      if (rememberMe) {
+                        SharedPreferences prefs = await SharedPreferences.getInstance();
+                        await prefs.setString('email', emailController.text);
+                        await prefs.setString('password', passwordController.text);
+                        await prefs.setBool('isLoggedIn', true); // Сохранение статуса
+                      }
+
+                      Navigator.pop(context); // Закрываем диалог
+                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => ProfileScreen()));
+                    } catch (e) {
+                      print('Error during sign in: $e');
                     }
-                    Navigator.pop(context);
-                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => ProfileScreen()));
                   },
                   child: Text('Enter'),
                 ),
@@ -101,14 +105,14 @@ class SignInSignUpScreen extends StatelessWidget {
     );
   }
 
-  // Диалог регистрации с проверкой всех полей
+  // Диалог регистрации
   void _showSignUpDialog(BuildContext context) {
     TextEditingController emailController = TextEditingController();
     TextEditingController passwordController = TextEditingController();
     TextEditingController confirmPasswordController = TextEditingController();
     TextEditingController nameController = TextEditingController();
     bool rememberMe = false;
-    bool isDriver = false; // Переменная для переключателя
+    bool isDriver = false;
 
     showDialog(
       context: context,
@@ -177,7 +181,6 @@ class SignInSignUpScreen extends StatelessWidget {
                 ),
                 TextButton(
                   onPressed: () async {
-                    // Проверка полей
                     String email = emailController.text;
                     String name = nameController.text;
                     String password = passwordController.text;
@@ -194,16 +197,20 @@ class SignInSignUpScreen extends StatelessWidget {
                     } else if (password != confirmPassword) {
                       _showErrorDialog(context, 'Passwords do not match.');
                     } else {
-                      // Заглушка для сохранения данных в удалённую БД и локальное хранилище
-                      if (rememberMe) {
-                        SharedPreferences prefs = await SharedPreferences.getInstance();
-                        await prefs.setString('email', email);
-                        await prefs.setString('password', password);
-                        await prefs.setBool('isDriver', isDriver); // Сохранение роли
-                        await prefs.setBool('isLoggedIn', true); // Сохранение статуса
+                      try {
+                        if (rememberMe) {
+                          SharedPreferences prefs = await SharedPreferences.getInstance();
+                          await prefs.setString('email', email);
+                          await prefs.setString('password', password);
+                          await prefs.setBool('isDriver', isDriver);
+                          await prefs.setBool('isLoggedIn', true);
+                        }
+
+                        Navigator.pop(context);
+                        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => ProfileScreen()));
+                      } catch (e) {
+                        print('Error during sign up: $e');
                       }
-                      Navigator.pop(context);
-                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => ProfileScreen()));
                     }
                   },
                   child: Text('Enter'),
@@ -216,14 +223,13 @@ class SignInSignUpScreen extends StatelessWidget {
     );
   }
 
-  // Проверка email на соответствие формату
+  // Проверка email
   bool _isEmailValid(String email) {
-    // Регулярное выражение для проверки наличия "@" и точки после него
     final RegExp emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
     return emailRegex.hasMatch(email);
   }
 
-  // Проверка пароля на соответствие условиям
+  // Проверка пароля
   bool _isPasswordValid(String password) {
     if (password.length < 8) return false;
     bool hasDigit = password.contains(RegExp(r'\d'));
