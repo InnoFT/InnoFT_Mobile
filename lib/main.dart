@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // Riverpod
+import 'package:inno_ft/screens/splash_screen.dart';
 import 'components/theme_provider.dart'; // Импортируем провайдер темы
 import 'screens/settings_screen.dart'; // Экран настроек
 import 'screens/profile_screen.dart'; // Экран профиля
@@ -25,8 +26,9 @@ class MyApp extends ConsumerWidget {
       theme: ThemeData.light(), // Светлая тема
       darkTheme: ThemeData.dark(), // Темная тема
       themeMode: isDarkTheme ? ThemeMode.dark : ThemeMode.light, // Переключение темной/светлой темы
-      initialRoute: '/signin_signup', // Начальный экран
+      initialRoute: '/splash', // Начальный экран
       routes: {
+        '/splash': (context) => SplashScreen(),
         '/signin_signup': (context) => SignInSignUpScreen(),
         '/profile': (context) => ProfileScreen(),
         '/settings': (context) => SettingsScreen(),

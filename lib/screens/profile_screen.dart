@@ -134,11 +134,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               itemCount: activeTrips.length,
               itemBuilder: (context, index) {
                 final trip = activeTrips[index];
-                return ListTile(
-                  title: Text('From ${trip['from']} to ${trip['to']}'),
-                  subtitle: Text('Departure: ${trip['departure']}'),
-                  onTap: () => _showTripDetailsDialog(context, trip), // Открываем диалог при нажатии
-                );
+                return _buildTripItem(trip); // Отображаем каждую поездку
               },
             ),
 
@@ -170,46 +166,64 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  // Метод для показа диалога с деталями поездки
-  void _showTripDetailsDialog(BuildContext context, Map<String, String> trip) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Trip Details'),
-          content: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('From: ${trip['from']}'),
-              Text('To: ${trip['to']}'),
-              Text('Departure: ${trip['departure']}'),
-              Text('Arrival: ${trip['arrival']}'),
-              Text('Seats: ${trip['availableSeats']}/${trip['totalSeats']}'),
-              Text('Driver: ${trip['driverName']}'),
-              Text('Driver Phone: ${trip['driverPhone']}'),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context); // Закрываем диалог без действий
-              },
-              child: Text('OK'),
-            ),
-            TextButton(
-              onPressed: () {
-                ref.read(activeTripsProvider.notifier).removeTrip(trip); // Удаляем поездку из активных
-                Navigator.pop(context); // Закрываем диалог
-              },
-              child: Text('Cancel'),
-            ),
-          ],
-        );
-      },
+  // Виджет для активных поездок с возможностью завершить поездку
+  Widget _buildTripItem(Map<String, String> trip) {
+    return ListTile(
+      title: Text('From ${trip['from']} to ${trip['to']}'),
+      subtitle: Text('Departure: ${trip['departure']}'),
+      trailing: trip['driver'] == 'your' ? Text('(your)', style: TextStyle(color: Colors.blue)) : null,
+      onTap: () => _showTripDetailsDialog(trip),
     );
   }
 
+  // Диалог с деталями поездки и кнопкой Finish для ваших поездок
+void _showTripDetailsDialog(Map<String, String> trip) {
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: Text('Trip Details'),
+        content: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('From: ${trip['from']}'),
+            Text('To: ${trip['to']}'),
+            Text('Departure: ${trip['departure']}'),
+            Text('Arrival: ${trip['arrival']}'),
+            Text('Seats: ${trip['availableSeats']}/${trip['totalSeats']}'),
+            Text('Driver: ${trip['driver']}'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // Закрываем диалог без действий
+            },
+            child: Text('OK'),
+          ),
+          TextButton(
+            onPressed: () {
+              ref.read(activeTripsProvider.notifier).removeTrip(trip); // Удаляем поездку из активных
+              Navigator.pop(context);
+            },
+            child: Text('Cancel'),
+          ),
+          if (trip['driver'] == 'your') ...[
+            TextButton(
+              onPressed: () {
+                ref.read(activeTripsProvider.notifier).removeTrip(trip); // Удаляем из активных
+                ref.read(tripHistoryProvider.notifier).addTripToHistory('${trip['from']} to ${trip['to']}'); // Добавляем в историю
+                Navigator.pop(context);
+              },
+              child: Text('Finish'),
+            ),
+          ],
+        ],
+      );
+    },
+  );
+}
   // Виджет для отображения информации пользователя
   Widget _buildUserInfo(String label, String value, VoidCallback onPressed) {
     return Padding(
@@ -257,8 +271,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       },
     );
   }
-
-
 
   // Диалог для изменения информации
   void _showEditDialog(BuildContext context, String field, String currentValue) {
