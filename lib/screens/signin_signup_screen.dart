@@ -116,6 +116,8 @@ class SignInSignUpScreen extends StatelessWidget {
     TextEditingController passwordController = TextEditingController();
     TextEditingController confirmPasswordController = TextEditingController();
     TextEditingController nameController = TextEditingController();
+    TextEditingController phoneController =
+        TextEditingController(); // Контроллер для телефона
     bool rememberMe = false;
     bool isDriver = false;
     String role = "Fellow Traveller";
@@ -137,6 +139,11 @@ class SignInSignUpScreen extends StatelessWidget {
                   TextField(
                     controller: emailController,
                     decoration: InputDecoration(labelText: 'Email'),
+                  ),
+                  TextField(
+                    controller: phoneController, // Поле для ввода телефона
+                    decoration: InputDecoration(labelText: 'Phone Number'),
+                    keyboardType: TextInputType.phone, // Тип ввода телефона
                   ),
                   TextField(
                     controller: passwordController,
@@ -189,10 +196,11 @@ class SignInSignUpScreen extends StatelessWidget {
                   onPressed: () async {
                     String email = emailController.text;
                     String name = nameController.text;
+                    String phone = phoneController.text; // Получаем телефон
                     String password = passwordController.text;
                     String confirmPassword = confirmPasswordController.text;
 
-                    if (isDriver){
+                    if (isDriver) {
                       role = "Driver";
                     }
 
@@ -203,6 +211,13 @@ class SignInSignUpScreen extends StatelessWidget {
                     } else if (!_isEmailValid(email)) {
                       _showErrorDialog(context,
                           'Email must contain "@" and a domain (e.g. @gmail.com).');
+                    } else if (phone.isEmpty) {
+                      _showErrorDialog(
+                          context, 'Phone number cannot be empty.');
+                    } else if (!_isPhoneValid(phone)) {
+                      // Проверяем телефон
+                      _showErrorDialog(context,
+                          'Phone number must start with +7 or 8 and contain 11 digits.');
                     } else if (!_isPasswordValid(password)) {
                       _showErrorDialog(context,
                           'Password must be at least 8 characters long, include a digit and a special character.');
@@ -214,6 +229,8 @@ class SignInSignUpScreen extends StatelessWidget {
                           SharedPreferences prefs =
                               await SharedPreferences.getInstance();
                           await prefs.setString('email', email);
+                          await prefs.setString(
+                              'phone', phone); // Сохраняем телефон
                           await prefs.setString('password', password);
                           await prefs.setBool('isDriver', isDriver);
                           await prefs.setBool('isLoggedIn', true);
@@ -235,6 +252,12 @@ class SignInSignUpScreen extends StatelessWidget {
         );
       },
     );
+  }
+
+// Проверка телефона
+  bool _isPhoneValid(String phone) {
+    final RegExp phoneRegex = RegExp(r'^(\+7|8)\d{10}$');
+    return phoneRegex.hasMatch(phone);
   }
 
   // Проверка email
