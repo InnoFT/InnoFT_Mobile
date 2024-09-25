@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import '../components/providers.dart'; // Импортируем провайдеры
+import '../components/trip_provider.dart'; // Импортируем провайдер для активных поездок и истории поездок
 import '../screens/settings_screen.dart';
 import '../screens/create_trip_screen.dart';
 import '../screens/find_trip_screen.dart';
@@ -18,8 +18,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   String userEmail = "";
   String userPhone = "";
   double userRating = 0.0;
-  List<String> activeTrips = [];
-  List<String> tripHistory = [];
 
   @override
   void initState() {
@@ -34,8 +32,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       userEmail = "john.doe@example.com"; // Заглушка для email
       userPhone = "+71234567890"; // Заглушка для телефона
       userRating = 4.7; // Заглушка для рейтинга
-      activeTrips = ["Trip 1", "Trip 2"]; // Заглушка для активных поездок
-      tripHistory = ["Trip 3 (Completed)", "Trip 4 (Completed)"]; // Заглушка для истории поездок
     });
   }
 
@@ -50,6 +46,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final activeTrips = ref.watch(activeTripsProvider); // Получаем активные поездки из провайдера
+    final tripHistory = ref.watch(tripHistoryProvider); // Получаем историю поездок из провайдера
+
     return DefaultTabController(
       length: 4,
       child: Scaffold(
@@ -67,7 +66,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         body: TabBarView(
           children: [
             SettingsScreen(),
-            _buildProfileContent(context),
+            _buildProfileContent(context, activeTrips, tripHistory), // Передаем активные поездки и историю в профиль
             CreateTripScreen(),
             FindTripScreen(),
           ],
@@ -77,7 +76,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   // Основное содержимое профиля
-  Widget _buildProfileContent(BuildContext context) {
+  Widget _buildProfileContent(BuildContext context, List<Map<String, String>> activeTrips, List<String> tripHistory) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -122,12 +121,26 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
           SizedBox(height: 20),
 
-          // Активные поездки
+          // Активные поездки из провайдера
           Text(
             'Active Trips:',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
-          ..._buildActiveTrips(activeTrips),
+          if (activeTrips.isEmpty)
+            Text('No active trips available.')
+          else
+            ListView.builder(
+              shrinkWrap: true, // Чтобы ListView корректно работал внутри ScrollView
+              itemCount: activeTrips.length,
+              itemBuilder: (context, index) {
+                final trip = activeTrips[index];
+                return ListTile(
+                  title: Text('From ${trip['from']} to ${trip['to']}'),
+                  subtitle: Text('Departure: ${trip['departure']}'),
+                  onTap: () => _showTripDetailsDialog(context, trip), // Открываем диалог при нажатии
+                );
+              },
+            ),
 
           SizedBox(height: 20),
 
@@ -136,13 +149,64 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             'Trip History:',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
-          ..._buildTripHistory(tripHistory),
+          if (tripHistory.isEmpty)
+            Text('No trip history available.')
+          else
+            ListView.builder(
+              shrinkWrap: true, // Чтобы ListView корректно работал внутри ScrollView
+              itemCount: tripHistory.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  title: Text(tripHistory[index]),
+                );
+              },
+            ),
           ElevatedButton(
-            onPressed: _showClearHistoryDialog,
+            onPressed: _showClearHistoryDialog, // Вызов диалога для очистки истории
             child: Text('Clear History'),
           ),
         ],
       ),
+    );
+  }
+
+  // Метод для показа диалога с деталями поездки
+  void _showTripDetailsDialog(BuildContext context, Map<String, String> trip) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Trip Details'),
+          content: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('From: ${trip['from']}'),
+              Text('To: ${trip['to']}'),
+              Text('Departure: ${trip['departure']}'),
+              Text('Arrival: ${trip['arrival']}'),
+              Text('Seats: ${trip['availableSeats']}/${trip['totalSeats']}'),
+              Text('Driver: ${trip['driverName']}'),
+              Text('Driver Phone: ${trip['driverPhone']}'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Закрываем диалог без действий
+              },
+              child: Text('OK'),
+            ),
+            TextButton(
+              onPressed: () {
+                ref.read(activeTripsProvider.notifier).removeTrip(trip); // Удаляем поездку из активных
+                Navigator.pop(context); // Закрываем диалог
+              },
+              child: Text('Cancel'),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -166,23 +230,37 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  // Построение списка активных поездок
-  List<Widget> _buildActiveTrips(List<String> trips) {
-    if (trips.isEmpty) {
-      return [Text('No active trips available.')];
-    }
-    return trips.map((trip) => ListTile(title: Text(trip))).toList();
+  // Диалог для очистки истории
+  void _showClearHistoryDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Clear Trip History'),
+          content: Text('Are you sure you want to clear your trip history?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Закрываем диалог без действий
+              },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                ref.read(tripHistoryProvider.notifier).clearHistory(); // Очищаем историю поездок через провайдер
+                Navigator.pop(context); // Закрываем диалог
+              },
+              child: Text('Clear'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
-  // Построение истории поездок
-  List<Widget> _buildTripHistory(List<String> trips) {
-    if (trips.isEmpty) {
-      return [Text('No trip history available.')];
-    }
-    return trips.map((trip) => ListTile(title: Text(trip))).toList();
-  }
 
-  // Диалог для изменения информации с проверкой на ошибки
+
+  // Диалог для изменения информации
   void _showEditDialog(BuildContext context, String field, String currentValue) {
     TextEditingController controller = TextEditingController(text: currentValue);
 
@@ -246,43 +324,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  // Диалог подтверждения для очистки истории
-  void _showClearHistoryDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Clear Trip History'),
-          content: Text('Are you sure you want to clear your trip history?'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  tripHistory = [];
-                });
-                Navigator.pop(context);
-              },
-              child: Text('Clear'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   // Проверка email на правильность
   bool _isEmailValid(String email) {
     final RegExp emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
     return emailRegex.hasMatch(email);
   }
 
-  // Проверка телефона на правильность (только цифры и знак "+" в начале)
+  // Проверка телефона на правильность
   bool _isPhoneValid(String phone) {
     final RegExp phoneRegex = RegExp(r'^(\+7|8)\d{10}$');
     return phoneRegex.hasMatch(phone);
