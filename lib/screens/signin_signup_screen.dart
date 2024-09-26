@@ -29,7 +29,7 @@ class SignInSignUpScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
+                const Text(
                   "InnoFellowTravelers",
                   style: TextStyle(
                     color: Colors.white,
@@ -37,12 +37,12 @@ class SignInSignUpScreen extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                SizedBox(height: 40),
+                const SizedBox(height: 40),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue.shade700.withOpacity(0.9),
                     foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                    padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
@@ -50,14 +50,14 @@ class SignInSignUpScreen extends StatelessWidget {
                   onPressed: () {
                     _showSignInDialog(context);
                   },
-                  child: Text("Sign In", style: TextStyle(fontSize: 18)),
+                  child: const Text("Sign In", style: TextStyle(fontSize: 18)),
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue.shade900.withOpacity(0.9),
                     foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                    padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
@@ -65,7 +65,7 @@ class SignInSignUpScreen extends StatelessWidget {
                   onPressed: () {
                     _showSignUpDialog(context);
                   },
-                  child: Text("Sign Up", style: TextStyle(fontSize: 18)),
+                  child: const Text("Sign Up", style: TextStyle(fontSize: 18)),
                 ),
               ],
             ),
@@ -118,7 +118,7 @@ class SignInSignUpScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  SizedBox(height: 15),
+                  const SizedBox(height: 15),
                   TextField(
                     controller: passwordController,
                     decoration: InputDecoration(
@@ -134,7 +134,7 @@ class SignInSignUpScreen extends StatelessWidget {
                     ),
                     obscureText: true,
                   ),
-                  SizedBox(height: 15),
+                  const SizedBox(height: 15),
                   Row(
                     children: [
                       Checkbox(
@@ -184,19 +184,19 @@ class SignInSignUpScreen extends StatelessWidget {
                       Navigator.pop(context);
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (_) => ProfileScreen()),
+                        MaterialPageRoute(builder: (_) => const ProfileScreen()),
                       );
                     } catch (err) {
                       _showErrorDialog(context, "Error logging in: $err");
                     }
                   },
-                  child: Text('Enter', style: TextStyle(color: Colors.green)),
+                  child: const Text('Enter', style: TextStyle(color: Colors.green)),
                 ),
                 TextButton(
                   onPressed: () {
                     Navigator.pop(context);
                   },
-                  child: Text('Cancel', style: TextStyle(color: Colors.red)),
+                  child: const Text('Cancel', style: TextStyle(color: Colors.red)),
                 ),
               ],
             );
@@ -253,7 +253,7 @@ class SignInSignUpScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  SizedBox(height: 15),
+                  const SizedBox(height: 15),
                   TextField(
                     controller: emailController,
                     decoration: InputDecoration(
@@ -268,7 +268,7 @@ class SignInSignUpScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  SizedBox(height: 15),
+                  const SizedBox(height: 15),
                   TextField(
                     controller: phoneController,
                     decoration: InputDecoration(
@@ -284,7 +284,7 @@ class SignInSignUpScreen extends StatelessWidget {
                     ),
                     keyboardType: TextInputType.phone,
                   ),
-                  SizedBox(height: 15),
+                  const SizedBox(height: 15),
                   TextField(
                     controller: passwordController,
                     decoration: InputDecoration(
@@ -300,7 +300,7 @@ class SignInSignUpScreen extends StatelessWidget {
                     ),
                     obscureText: true,
                   ),
-                  SizedBox(height: 15),
+                  const SizedBox(height: 15),
                   TextField(
                     controller: confirmPasswordController,
                     decoration: InputDecoration(
@@ -316,7 +316,7 @@ class SignInSignUpScreen extends StatelessWidget {
                     ),
                     obscureText: true,
                   ),
-                  SizedBox(height: 15),
+                  const SizedBox(height: 15),
                   Row(
                     children: [
                       Checkbox(
@@ -424,7 +424,7 @@ class SignInSignUpScreen extends StatelessWidget {
                         Navigator.pop(context);
                         Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(builder: (_) => ProfileScreen()),
+                          MaterialPageRoute(builder: (_) => const ProfileScreen()),
                         );
                       } catch (e) {
                         _showErrorDialog(context, 'Error during sign up: $e');
@@ -433,17 +433,17 @@ class SignInSignUpScreen extends StatelessWidget {
                       Navigator.pop(context);
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (_) => ProfileScreen()),
+                        MaterialPageRoute(builder: (_) => const ProfileScreen()),
                       );
                     }
                   },
-                  child: Text('Enter', style: TextStyle(color: Colors.green)),
+                  child: const Text('Enter', style: TextStyle(color: Colors.green)),
                 ),
                 TextButton(
                   onPressed: () {
                     Navigator.pop(context);
                   },
-                  child: Text('Cancel', style: TextStyle(color: Colors.red)),
+                  child: const Text('Cancel', style: TextStyle(color: Colors.red)),
                 ),
               ],
             );
@@ -505,7 +505,7 @@ class SignInSignUpScreen extends StatelessWidget {
                 onPressed: () {
                   Navigator.pop(context);
                 },
-                child: Text('OK', style: TextStyle(color: Colors.red)),
+                child: const Text('OK', style: TextStyle(color: Colors.red)),
               ),
             ),
           ],
