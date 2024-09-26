@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:ffi';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,7 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:inno_ft/screens/signin_signup_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
-import '../components/trip_provider.dart'; // Импортируем провайдер для активных поездок и истории поездок
+import '../components/trip_provider.dart';
 import '../screens/settings_screen.dart';
 import '../screens/create_trip_screen.dart';
 import '../screens/find_trip_screen.dart';
@@ -55,9 +54,29 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
+  void showErrorDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Error'),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _loadUserData(String? authToken) async {
     if (authToken == null) {
-      _showErrorDialog(context, 'Error: No authentication token found.');
+      showErrorDialog(context, 'Error: No authentication token found.');
       return;
     }
 
@@ -82,21 +101,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           tripHistory = ["None"];
         });
       } else {
-        _showErrorDialog(
+        showErrorDialog(
             context, 'Error loading profile: ${response.statusCode}');
       }
     } catch (e) {
-      _showErrorDialog(context, 'Error loading profile: $e');
+      showErrorDialog(context, 'Error loading profile: $e');
     }
   }
 
-  Future<void> _updateUserProfile(
-      String name, String phone) async {
+  Future<void> _updateUserProfile(String name, String phone) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('Authorization');
 
     if (token == null) {
-      _showErrorDialog(context, 'User is not authenticated');
+      showErrorDialog(context, 'User is not authenticated');
       return;
     }
 
@@ -115,14 +133,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       }
 
       var response = await request.send();
-      if (response.statusCode == 200) {
-        _showErrorDialog(context, 'Profile updated successfully');
-      } else {
-        _showErrorDialog(
+      if (response.statusCode != 200) {
+        showErrorDialog(
             context, 'Error updating profile: ${response.statusCode}');
       }
     } catch (e) {
-      _showErrorDialog(context, 'Error updating profile: $e');
+      showErrorDialog(context, 'Error updating profile: $e');
     }
   }
 
@@ -139,8 +155,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final activeTrips = ref.watch(activeTripsProvider); // Получаем активные поездки из провайдера
-    final tripHistory = ref.watch(tripHistoryProvider); // Получаем историю поездок из провайдера
+    final activeTrips = ref
+        .watch(activeTripsProvider); // Получаем активные поездки из провайдера
+    final tripHistory = ref
+        .watch(tripHistoryProvider); // Получаем историю поездок из провайдера
 
     return DefaultTabController(
       length: 4,
@@ -159,7 +177,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         body: TabBarView(
           children: [
             SettingsScreen(),
-            _buildProfileContent(context, activeTrips, tripHistory), // Передаем активные поездки и историю в профиль
+            _buildProfileContent(context),
             CreateTripScreen(),
             FindTripScreen(),
           ],
@@ -168,7 +186,72 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  Widget _buildProfileContent(BuildContext context) {    
+  void showEditDialog(BuildContext context, String field, String currentValue) {
+    TextEditingController controller =
+        TextEditingController(text: currentValue);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Edit $field'),
+          content: TextField(
+            controller: controller,
+            decoration: InputDecoration(labelText: 'Enter new $field'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                // Валидация для имени
+                if (field == 'name' && controller.text.isEmpty) {
+                  showErrorDialog(context, 'Name cannot be empty.');
+                  return;
+                }
+                // Валидация для email
+                if (field == 'email' && !isEmailValid(controller.text)) {
+                  showErrorDialog(context, 'Invalid email format.');
+                  return;
+                }
+                // Валидация для телефона
+                if (field == 'phone' && !isPhoneValid(controller.text)) {
+                  showErrorDialog(context,
+                      'Phone number must start with +7 or 8 and contain 11 digits.');
+                  return;
+                }
+
+                // Сохраняем изменения
+                if (field == 'name') {
+                  setState(() {
+                    userName = controller.text;
+                  });
+                }
+                if (field == 'email') {
+                  setState(() {
+                    userEmail = controller.text;
+                  });
+                }
+                if (field == 'phone') {
+                  setState(() {
+                    userPhone = controller.text;
+                  });
+                }
+                Navigator.pop(context);
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildProfileContent(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -201,13 +284,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
           const SizedBox(height: 20),
           _buildUserInfo('Name', userName, () {
-            _showEditDialog(context, 'name', userName);
+            showEditDialog(context, 'name', userName);
           }),
           _buildUserInfo('Email', userEmail, () {
-            _showEditDialog(context, 'email', userEmail);
+            showEditDialog(context, 'email', userEmail);
           }),
           _buildUserInfo('Phone', userPhone, () {
-            _showEditDialog(context, 'phone', userPhone);
+            showEditDialog(context, 'phone', userPhone);
           }),
           const SizedBox(height: 20),
           Text(
@@ -220,33 +303,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           if (activeTrips.isEmpty)
-            Text('No active trips available.')
+            const Text('No active trips available.')
           else
-            ListView.builder(
-              shrinkWrap: true, // Чтобы ListView корректно работал внутри ScrollView
-              itemCount: activeTrips.length,
-              itemBuilder: (context, index) {
-                final trip = activeTrips[index];
-                return ListTile(
-                  title: Text('From ${trip['from']} to ${trip['to']}'),
-                  subtitle: Text('Departure: ${trip['departure']}'),
-                  onTap: () => _showTripDetailsDialog(context, trip), // Открываем диалог при нажатии
-                );
-              },
-            ),
-
-          SizedBox(height: 20),
-
-          // История поездок с кнопкой "очистить"
-          Text(
+            const Text('Some active trips available.'),
+          const SizedBox(height: 20),
+          const Text(
             'Trip History:',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           if (tripHistory.isEmpty)
-            Text('No trip history available.')
+            const Text('No trip history available.')
           else
             ListView.builder(
-              shrinkWrap: true, // Чтобы ListView корректно работал внутри ScrollView
+              shrinkWrap: true,
               itemCount: tripHistory.length,
               itemBuilder: (context, index) {
                 return ListTile(
@@ -269,7 +338,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Trip Details'),
+          title: const Text('Trip Details'),
           content: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -286,16 +355,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(context); // Закрываем диалог без действий
+                Navigator.pop(context);
               },
-              child: Text('OK'),
+              child: const Text('OK'),
             ),
             TextButton(
               onPressed: () {
-                ref.read(activeTripsProvider.notifier).removeTrip(trip); // Удаляем поездку из активных
-                Navigator.pop(context); // Закрываем диалог
+                ref.read(activeTripsProvider.notifier).removeTrip(trip);
+                Navigator.pop(context);
               },
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
             ),
           ],
         );
@@ -303,44 +372,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  // Метод для показа диалога с деталями поездки
-  void _showTripDetailsDialog(BuildContext context, Map<String, String> trip) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Trip Details'),
-          content: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('From: ${trip['from']}'),
-              Text('To: ${trip['to']}'),
-              Text('Departure: ${trip['departure']}'),
-              Text('Arrival: ${trip['arrival']}'),
-              Text('Seats: ${trip['availableSeats']}/${trip['totalSeats']}'),
-              Text('Driver: ${trip['driverName']}'),
-              Text('Driver Phone: ${trip['driverPhone']}'),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context); // Закрываем диалог без действий
-              },
-              child: Text('OK'),
-            ),
-            TextButton(
-              onPressed: () {
-                ref.read(activeTripsProvider.notifier).removeTrip(trip); // Удаляем поездку из активных
-                Navigator.pop(context); // Закрываем диалог
-              },
-              child: Text('Cancel'),
-            ),
-          ],
-        );
-      },
-    );
+  // Проверка email на правильность
+  bool isEmailValid(String email) {
+    final RegExp emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
+    return emailRegex.hasMatch(email);
+  }
+
+  // Проверка телефона на правильность
+  bool isPhoneValid(String phone) {
+    final RegExp phoneRegex = RegExp(r'^(\+7|8)\d{10}$');
+    return phoneRegex.hasMatch(phone);
   }
 
   Widget _buildUserInfo(String label, String value, VoidCallback onPressed) {
@@ -362,116 +403,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  // Диалог для очистки истории
-  void _showClearHistoryDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Clear Trip History'),
-          content: Text('Are you sure you want to clear your trip history?'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context); // Закрываем диалог без действий
-              },
-              child: Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                ref.read(tripHistoryProvider.notifier).clearHistory(); // Очищаем историю поездок через провайдер
-                Navigator.pop(context); // Закрываем диалог
-              },
-              child: Text('Clear'),
-            ),
-          ],
-        );
-      },
-    );
-  List<Widget> _buildActiveTrips(List<String> trips) {
-    if (trips.isEmpty) {
-      return [const Text('No active trips available.')];
-    }
-    return trips.map((trip) => ListTile(title: Text(trip))).toList();
-  }
-
-  List<Widget> _buildTripHistory(List<String> trips) {
-    if (trips.isEmpty) {
-      return [const Text('No trip history available.')];
-    }
-    return trips.map((trip) => ListTile(title: Text(trip))).toList();
-  }
-
-
-
-
-  void _showEditDialog(
-      BuildContext context, String field, String currentValue) {
-    TextEditingController controller =
-        TextEditingController(text: currentValue);
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Edit $field'),
-          content: TextField(
-            controller: controller,
-            decoration: InputDecoration(labelText: 'Enter new $field'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                // Валидация для имени
-                if (field == 'name' && controller.text.isEmpty) {
-                  _showErrorDialog(context, 'Name cannot be empty.');
-                  return;
-                }
-                // Валидация для email
-                if (field == 'email' && !_isEmailValid(controller.text)) {
-                  _showErrorDialog(context, 'Invalid email format.');
-                  return;
-                }
-                // Валидация для телефона
-                if (field == 'phone' && !_isPhoneValid(controller.text)) {
-                  _showErrorDialog(context,
-                      'Phone number must start with +7 or 8 and contain 11 digits.');
-                  return;
-                }
-
-                // Сохраняем изменения
-                if (field == 'name') {
-                  setState(() {
-                    userName = controller.text;
-                  });
-                }
-                if (field == 'email') {
-                  setState(() {
-                    userEmail = controller.text;
-                  });
-                }
-                if (field == 'phone') {
-                  setState(() {
-                    userPhone = controller.text;
-                  });
-                }
-                Navigator.pop(context);
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  // Диалог подтверждения для очистки истории
   void _showClearHistoryDialog() {
     showDialog(
       context: context,
@@ -489,9 +420,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
             TextButton(
               onPressed: () {
-                setState(() {
-                  tripHistory = [];
-                });
+                ref.read(tripHistoryProvider.notifier).clearHistory();
                 Navigator.pop(context);
               },
               child: const Text('Clear'),
@@ -500,38 +429,49 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         );
       },
     );
-  }
+    List<Widget> _buildActiveTrips(List<String> trips) {
+      if (trips.isEmpty) {
+        return [const Text('No active trips available.')];
+      }
+      return trips.map((trip) => ListTile(title: Text(trip))).toList();
+    }
 
-  // Проверка email на правильность
-  bool _isEmailValid(String email) {
-    final RegExp emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
-    return emailRegex.hasMatch(email);
-  }
+    List<Widget> _buildTripHistory(List<String> trips) {
+      if (trips.isEmpty) {
+        return [const Text('No trip history available.')];
+      }
+      return trips.map((trip) => ListTile(title: Text(trip))).toList();
+    }
 
-  // Проверка телефона на правильность
-  bool _isPhoneValid(String phone) {
-    final RegExp phoneRegex = RegExp(r'^(\+7|8)\d{10}$');
-    return phoneRegex.hasMatch(phone);
-  }
-
-  // Диалог ошибки
-  void _showErrorDialog(BuildContext context, String message) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Error'),
-          content: Text(message),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
+    // Диалог подтверждения для очистки истории
+    void _showClearHistoryDialog() {
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Clear Trip History'),
+            content:
+                const Text('Are you sure you want to clear your trip history?'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    tripHistory = [];
+                  });
+                  Navigator.pop(context);
+                },
+                child: const Text('Clear'),
+              ),
+            ],
+          );
+        },
+      );
+    }
   }
 }
