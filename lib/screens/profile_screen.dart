@@ -208,17 +208,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
             TextButton(
               onPressed: () {
-                // Валидация для имени
                 if (field == 'name' && controller.text.isEmpty) {
                   showErrorDialog(context, 'Name cannot be empty.');
                   return;
                 }
-                // Валидация для email
                 if (field == 'email' && !isEmailValid(controller.text)) {
                   showErrorDialog(context, 'Invalid email format.');
                   return;
                 }
-                // Валидация для телефона
                 if (field == 'phone' && !isPhoneValid(controller.text)) {
                   showErrorDialog(context,
                       'Phone number must start with +7 or 8 and contain 11 digits.');
@@ -241,6 +238,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     userPhone = controller.text;
                   });
                 }
+                _updateUserProfile(userName, userEmail);
                 Navigator.pop(context);
               },
               child: const Text('Save'),

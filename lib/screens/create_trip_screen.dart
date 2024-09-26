@@ -6,6 +6,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class CreateTripScreen extends ConsumerStatefulWidget {
+  const CreateTripScreen({super.key});
+
   @override
   _CreateTripScreenState createState() => _CreateTripScreenState();
 }
@@ -23,7 +25,6 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
 
   // Text controllers for trip details
   TextEditingController availableSeatsController = TextEditingController();
-  TextEditingController carController = TextEditingController();
   TextEditingController priceController = TextEditingController();
   TextEditingController commentsController = TextEditingController();
 
@@ -35,10 +36,20 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
 
   // Get current position of the user
   Future<void> _determinePosition() async {
-    Position position = await Geolocator.getCurrentPosition();
-    setState(() {
-      userLocation = LatLng(position.latitude, position.longitude);
-    });
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      setState(() {
+        userLocation = LatLng(position.latitude, position.longitude);
+      });
+    } catch (e) {
+      const double defaultLatitude = 55.75229643707189;
+      const double defaultLongitude = 48.74462643352501;
+      setState(() {
+        userLocation = const LatLng(defaultLatitude, defaultLongitude);
+      });
+    }
   }
 
   // Callback when map is tapped to set points and add markers
@@ -64,10 +75,10 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
         _getRouteAndDrawPolyline();
       } else {
         // Reset the map: clear markers and route
-        mapController.clearSymbols();  // Clear markers
-        mapController.clearLines();    // Clear the drawn route
-        startPoint = coordinates;      // Set the new pickup point
-        destinationPoint = null;       // Reset destination
+        mapController.clearSymbols(); // Clear markers
+        mapController.clearLines(); // Clear the drawn route
+        startPoint = coordinates; // Set the new pickup point
+        destinationPoint = null; // Reset destination
         mapController.addSymbol(SymbolOptions(
           geometry: startPoint!,
           iconImage: "car-15",
@@ -81,7 +92,8 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
   Future<void> _getRouteAndDrawPolyline() async {
     if (startPoint == null || destinationPoint == null) return;
 
-    final String apiKey = 'pk.eyJ1IjoibGVsb25vdjIzIiwiYSI6ImNtMWlqc2YxbTBtb3EyanMyMDFyYXU2bGMifQ.tk-A8ed40Avnbu_-NXM69g';
+    const String apiKey =
+        'pk.eyJ1IjoibGVsb25vdjIzIiwiYSI6ImNtMWlqc2YxbTBtb3EyanMyMDFyYXU2bGMifQ.tk-A8ed40Avnbu_-NXM69g';
     final String url =
         'https://api.mapbox.com/directions/v5/mapbox/driving/${startPoint!.longitude},${startPoint!.latitude};${destinationPoint!.longitude},${destinationPoint!.latitude}?geometries=geojson&access_token=$apiKey';
 
@@ -105,19 +117,33 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
   }
 
   // Function to create the trip using input data
-  void _createTrip() {
+  Future<void> _createTrip() async {
     if (startPoint == null || destinationPoint == null) {
       _showErrorDialog("Please select both pickup and destination points.");
       return;
     }
-
     // You can handle trip creation logic here
-    print("Trip created with the following data:");
-    print("Pickup: $startPoint, Destination: $destinationPoint");
-    print("Available Seats: ${availableSeatsController.text}");
-    print("Car: ${carController.text}");
-    print("Price per Passenger: ${priceController.text}");
-    print("Comments: ${commentsController.text}");
+    final url = Uri.parse('http://localhost:8069/tips/create');
+    try {
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "total_seats": availableSeatsController.value,
+          "price_per_seat": priceController.value,
+          "start_latitude": startPoint!.latitude,
+          "start_longitude": startPoint!.longitude,
+          "end_latitude": destinationPoint!.latitude,
+          "end_longitude": destinationPoint!.longitude,
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        _showErrorDialog('Error creating trip: ${response.statusCode}');
+      }
+    } catch (e) {
+      _showErrorDialog('Error creating trip: $e');
+    }
   }
 
   void _showErrorDialog(String message) {
@@ -125,14 +151,14 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Error'),
+          title: const Text('Error'),
           content: Text(message),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: Text('OK'),
+              child: const Text('OK'),
             ),
           ],
         );
@@ -144,21 +170,26 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Create a Trip"),
+        title: const Text("Create a Trip"),
         backgroundColor: Colors.teal,
       ),
       body: userLocation == null
-          ? Center(child: CircularProgressIndicator()) // Show loader until user location is fetched
-          : SingleChildScrollView( // Make the screen scrollable to avoid overflow
+          ? const Center(
+              child:
+                  CircularProgressIndicator()) // Show loader until user location is fetched
+          : SingleChildScrollView(
+              // Make the screen scrollable to avoid overflow
               child: Column(
                 children: [
                   // Map for selecting pickup and destination
                   SizedBox(
                     height: 400,
                     child: MapboxMap(
-                      accessToken: 'pk.eyJ1IjoibGVsb25vdjIzIiwiYSI6ImNtMWlqc2YxbTBtb3EyanMyMDFyYXU2bGMifQ.tk-A8ed40Avnbu_-NXM69g',
+                      accessToken:
+                          'pk.eyJ1IjoibGVsb25vdjIzIiwiYSI6ImNtMWlqc2YxbTBtb3EyanMyMDFyYXU2bGMifQ.tk-A8ed40Avnbu_-NXM69g',
                       onMapCreated: (controller) => mapController = controller,
-                      onMapClick: (point, coordinates) => _onMapTapped(coordinates),
+                      onMapClick: (point, coordinates) =>
+                          _onMapTapped(coordinates),
                       initialCameraPosition: CameraPosition(
                         target: userLocation!,
                         zoom: 14.0,
@@ -175,30 +206,33 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
                         if (startPoint != null) ...[
                           Row(
                             children: [
-                              Icon(Icons.location_on, color: Colors.green),
-                              SizedBox(width: 10),
+                              const Icon(Icons.location_on,
+                                  color: Colors.green),
+                              const SizedBox(width: 10),
                               Text(
                                 "Pickup Point: ${startPoint!.latitude}, ${startPoint!.longitude}",
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold),
                               ),
                             ],
                           ),
                         ],
                         // Display destination point
                         if (destinationPoint != null) ...[
-                          SizedBox(height: 10),
+                          const SizedBox(height: 10),
                           Row(
                             children: [
-                              Icon(Icons.flag, color: Colors.red),
-                              SizedBox(width: 10),
+                              const Icon(Icons.flag, color: Colors.red),
+                              const SizedBox(width: 10),
                               Text(
                                 "Destination Point: ${destinationPoint!.latitude}, ${destinationPoint!.longitude}",
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold),
                               ),
                             ],
                           ),
                         ],
-                        SizedBox(height: 20),
+                        const SizedBox(height: 20),
                         // Form for trip details
                         Card(
                           elevation: 2,
@@ -212,39 +246,31 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
                               children: [
                                 TextField(
                                   controller: availableSeatsController,
-                                  decoration: InputDecoration(
+                                  decoration: const InputDecoration(
                                     labelText: "Available Seats",
                                     border: OutlineInputBorder(),
                                   ),
                                   keyboardType: TextInputType.number,
                                 ),
-                                SizedBox(height: 10),
-                                TextField(
-                                  controller: carController,
-                                  decoration: InputDecoration(
-                                    labelText: "Car",
-                                    border: OutlineInputBorder(),
-                                  ),
-                                ),
-                                SizedBox(height: 10),
+                                const SizedBox(height: 10),
                                 TextField(
                                   controller: priceController,
-                                  decoration: InputDecoration(
+                                  decoration: const InputDecoration(
                                     labelText: "Price per Passenger",
                                     border: OutlineInputBorder(),
                                   ),
                                   keyboardType: TextInputType.number,
                                 ),
-                                SizedBox(height: 10),
+                                const SizedBox(height: 10),
                                 TextField(
                                   controller: commentsController,
-                                  decoration: InputDecoration(
+                                  decoration: const InputDecoration(
                                     labelText: "Comments",
                                     border: OutlineInputBorder(),
                                   ),
                                   maxLines: 3,
                                 ),
-                                SizedBox(height: 20),
+                                const SizedBox(height: 20),
                                 Center(
                                   child: ElevatedButton(
                                     style: ElevatedButton.styleFrom(
@@ -254,7 +280,7 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
                                       ),
                                     ),
                                     onPressed: _createTrip,
-                                    child: Text("Create Trip"),
+                                    child: const Text("Create Trip"),
                                   ),
                                 ),
                               ],
