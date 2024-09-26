@@ -10,15 +10,14 @@ Welcome to the InnoFT Mobile repository! This project is a [brief project descri
 - [Contributing](#contributing)
 - [License](#license)
 
-## Screenshots and GIFs
-Here are some screenshots and GIFs showing the application in action:
+## Screenshots
+Here are some screenshots showing the application in action:
 
-| Screenshot 1  | Screenshot 2  | GIF 1  |
+| Screenshot 1  | Screenshot 2  | Screenshot 3  |
 |:-------------:|:-------------:|:------:|
-| ![Screenshot1](https://github.com/user-attachments/assets/ae74c945-e7b2-4ade-9436-0c4bccbe7cef) | ![Screenshot2](https://github.com/user-attachments/assets/aa0962d6-5d7b-47bc-9589-37aeae26613d) | ![GIF1](path-to-gif1) |
+| ![Screenshot1](https://github.com/user-attachments/assets/ae74c945-e7b2-4ade-9436-0c4bccbe7cef) | ![Screenshot2](https://github.com/user-attachments/assets/aa0962d6-5d7b-47bc-9589-37aeae26613d) | ![Screenshot3](https://github.com/user-attachments/assets/708be051-b29b-4961-8ec0-3c16563d2d20) |
 
-<img width="1418" alt="Screenshot 2024-09-26 at 5 55 38 PM" src="https://github.com/user-attachments/assets/ae74c945-e7b2-4ade-9436-0c4bccbe7cef">
-<img width="1440" alt="Screenshot 2024-09-26 at 5 56 21 PM" src="https://github.com/user-attachments/assets/aa0962d6-5d7b-47bc-9589-37aeae26613d">
+
 ## Setup
 
 To set up the project locally, follow these steps:
