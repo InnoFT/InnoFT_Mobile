@@ -36,7 +36,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _pickImage() async {
-    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
         _imageFile = File(pickedFile.path);
@@ -46,8 +47,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final activeTrips = ref.watch(activeTripsProvider); // Получаем активные поездки из провайдера
-    final tripHistory = ref.watch(tripHistoryProvider); // Получаем историю поездок из провайдера
+    final activeTrips = ref
+        .watch(activeTripsProvider); // Получаем активные поездки из провайдера
+    final tripHistory = ref
+        .watch(tripHistoryProvider); // Получаем историю поездок из провайдера
 
     return DefaultTabController(
       length: 4,
@@ -66,7 +69,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         body: TabBarView(
           children: [
             SettingsScreen(),
-            _buildProfileContent(context, activeTrips, tripHistory), // Передаем активные поездки и историю в профиль
+            _buildProfileContent(context, activeTrips,
+                tripHistory), // Передаем активные поездки и историю в профиль
             CreateTripScreen(),
             FindTripScreen(),
           ],
@@ -76,7 +80,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   // Основное содержимое профиля
-  Widget _buildProfileContent(BuildContext context, List<Map<String, String>> activeTrips, List<String> tripHistory) {
+  Widget _buildProfileContent(BuildContext context,
+      List<Map<String, String>> activeTrips, List<String> tripHistory) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -90,7 +95,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   radius: 50,
                   backgroundImage: _imageFile != null
                       ? FileImage(_imageFile!)
-                      : AssetImage('assets/user_photo.png') as ImageProvider,
+                      : AssetImage('/user_photo.png') as ImageProvider,
                 ),
                 TextButton(
                   onPressed: _pickImage,
@@ -130,14 +135,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             Text('No active trips available.')
           else
             ListView.builder(
-              shrinkWrap: true, // Чтобы ListView корректно работал внутри ScrollView
+              shrinkWrap:
+                  true, // Чтобы ListView корректно работал внутри ScrollView
               itemCount: activeTrips.length,
               itemBuilder: (context, index) {
                 final trip = activeTrips[index];
                 return ListTile(
                   title: Text('From ${trip['from']} to ${trip['to']}'),
                   subtitle: Text('Departure: ${trip['departure']}'),
-                  onTap: () => _showTripDetailsDialog(context, trip), // Открываем диалог при нажатии
+                  onTap: () => _showTripDetailsDialog(
+                      context, trip), // Открываем диалог при нажатии
                 );
               },
             ),
@@ -153,7 +160,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             Text('No trip history available.')
           else
             ListView.builder(
-              shrinkWrap: true, // Чтобы ListView корректно работал внутри ScrollView
+              shrinkWrap:
+                  true, // Чтобы ListView корректно работал внутри ScrollView
               itemCount: tripHistory.length,
               itemBuilder: (context, index) {
                 return ListTile(
@@ -162,7 +170,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               },
             ),
           ElevatedButton(
-            onPressed: _showClearHistoryDialog, // Вызов диалога для очистки истории
+            onPressed:
+                _showClearHistoryDialog, // Вызов диалога для очистки истории
             child: Text('Clear History'),
           ),
         ],
@@ -199,7 +208,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
             TextButton(
               onPressed: () {
-                ref.read(activeTripsProvider.notifier).removeTrip(trip); // Удаляем поездку из активных
+                ref
+                    .read(activeTripsProvider.notifier)
+                    .removeTrip(trip); // Удаляем поездку из активных
                 Navigator.pop(context); // Закрываем диалог
               },
               child: Text('Cancel'),
@@ -247,7 +258,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
             TextButton(
               onPressed: () {
-                ref.read(tripHistoryProvider.notifier).clearHistory(); // Очищаем историю поездок через провайдер
+                ref
+                    .read(tripHistoryProvider.notifier)
+                    .clearHistory(); // Очищаем историю поездок через провайдер
                 Navigator.pop(context); // Закрываем диалог
               },
               child: Text('Clear'),
@@ -258,11 +271,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-
-
   // Диалог для изменения информации
-  void _showEditDialog(BuildContext context, String field, String currentValue) {
-    TextEditingController controller = TextEditingController(text: currentValue);
+  void _showEditDialog(
+      BuildContext context, String field, String currentValue) {
+    TextEditingController controller =
+        TextEditingController(text: currentValue);
 
     showDialog(
       context: context,
@@ -294,7 +307,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 }
                 // Валидация для телефона
                 if (field == 'phone' && !_isPhoneValid(controller.text)) {
-                  _showErrorDialog(context, 'Phone number must start with +7 or 8 and contain 11 digits.');
+                  _showErrorDialog(context,
+                      'Phone number must start with +7 or 8 and contain 11 digits.');
                   return;
                 }
 
