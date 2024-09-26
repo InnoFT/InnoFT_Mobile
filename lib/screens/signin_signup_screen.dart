@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:inno_ft/services/auth_service.dart';
 import 'profile_screen.dart';
-import 'package:http/http.dart' as http;
 
 class SignInSignUpScreen extends StatelessWidget {
+  final AuthController _authController = AuthController();
+
+  SignInSignUpScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -71,7 +75,6 @@ class SignInSignUpScreen extends StatelessWidget {
     );
   }
 
-  // Sign-in Dialog
   void _showSignInDialog(BuildContext context) {
     TextEditingController emailController = TextEditingController();
     TextEditingController passwordController = TextEditingController();
@@ -156,24 +159,26 @@ class SignInSignUpScreen extends StatelessWidget {
               ),
               actions: [
                 TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
                   onPressed: () async {
-                    String email = emailController.text;
-                    String password = passwordController.text;
+                    try {
+                      await _authController.login(
+                        emailController.text,
+                        passwordController.text,
+                      );
 
-                    // Handle empty email or password
-                    if (email.isEmpty) {
-                      _showErrorDialog(context, 'Email cannot be empty.');
-                    } else if (!_isEmailValid(email)) {
-                      _showErrorDialog(context, 'Invalid email format.');
-                    } else if (password.isEmpty) {
-                      _showErrorDialog(context, 'Password cannot be empty.');
-                    } else {
                       if (rememberMe) {
                         SharedPreferences prefs =
                             await SharedPreferences.getInstance();
-                        await prefs.setString('email', email);
-                        await prefs.setString('password', password);
-                        await prefs.setBool('isLoggedIn', true);
+                        await prefs.setBool('rememberMe', true);
+                        await prefs.setString('email', emailController.text);
+                        await prefs.setString(
+                            'password', passwordController.text);
                       }
 
                       Navigator.pop(context);
@@ -181,6 +186,8 @@ class SignInSignUpScreen extends StatelessWidget {
                         context,
                         MaterialPageRoute(builder: (_) => ProfileScreen()),
                       );
+                    } catch (err) {
+                      _showErrorDialog(context, "Error logging in: $err");
                     }
                   },
                   child: Text('Enter', style: TextStyle(color: Colors.green)),
@@ -344,6 +351,7 @@ class SignInSignUpScreen extends StatelessWidget {
                         onChanged: (value) {
                           setState(() {
                             isDriver = value;
+                            role = isDriver ? "Driver" : "Fellow Traveller";
                           });
                         },
                       ),
@@ -357,6 +365,12 @@ class SignInSignUpScreen extends StatelessWidget {
                 ],
               ),
               actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Cancel'),
+                ),
                 TextButton(
                   onPressed: () async {
                     String email = emailController.text;
@@ -388,14 +402,32 @@ class SignInSignUpScreen extends StatelessWidget {
                     } else if (password != confirmPassword) {
                       _showErrorDialog(context, 'Passwords do not match.');
                     } else {
-                      if (rememberMe) {
-                        SharedPreferences prefs =
-                            await SharedPreferences.getInstance();
-                        await prefs.setString('email', email);
-                        await prefs.setString('phone', phone);
-                        await prefs.setString('password', password);
-                        await prefs.setBool('isDriver', isDriver);
-                        await prefs.setBool('isLoggedIn', true);
+                      try {
+                        await _authController.register(
+                          name,
+                          email,
+                          phone,
+                          password,
+                          role,
+                        );
+
+                        if (rememberMe) {
+                          SharedPreferences prefs =
+                              await SharedPreferences.getInstance();
+                          await prefs.setString('email', email);
+                          await prefs.setString('phone', phone);
+                          await prefs.setString('password', password);
+                          await prefs.setBool('isDriver', isDriver);
+                          await prefs.setBool('rememberMe', true);
+                        }
+
+                        Navigator.pop(context);
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (_) => ProfileScreen()),
+                        );
+                      } catch (e) {
+                        _showErrorDialog(context, 'Error during sign up: $e');
                       }
 
                       Navigator.pop(context);
@@ -433,7 +465,6 @@ class SignInSignUpScreen extends StatelessWidget {
     return emailRegex.hasMatch(email);
   }
 
-  // Password validation
   bool _isPasswordValid(String password) {
     if (password.length < 8) return false;
     bool hasDigit = password.contains(RegExp(r'\d'));
@@ -441,7 +472,6 @@ class SignInSignUpScreen extends StatelessWidget {
     return hasDigit && hasSpecialChar;
   }
 
-  // Error dialog
   void _showErrorDialog(BuildContext context, String message) {
     showDialog(
       context: context,
