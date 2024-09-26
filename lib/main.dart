@@ -1,24 +1,31 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart'; // Подключаем Riverpod
-import 'screens/signin_signup_screen.dart';
-import 'screens/profile_screen.dart';
-import 'screens/settings_screen.dart';
-import 'screens/create_trip_screen.dart';
-import 'screens/find_trip_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // Riverpod
+import 'components/theme_provider.dart'; // Импортируем провайдер темы
+import 'screens/settings_screen.dart'; // Экран настроек
+import 'screens/profile_screen.dart'; // Экран профиля
+import 'screens/signin_signup_screen.dart'; // Экран входа/регистрации
+import 'screens/create_trip_screen.dart'; // Экран создания поездки
+import 'screens/find_trip_screen.dart'; // Экран поиска поездки
 
 void main() {
-  runApp(ProviderScope(child: MyApp())); // Оборачиваем приложение в ProviderScope
+  runApp(
+    ProviderScope( // Оборачиваем все приложение в ProviderScope для работы с Riverpod
+      child: MyApp(),
+    ),
+  );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDarkTheme = ref.watch(themeNotifierProvider); // Получаем текущую тему через Riverpod
+
     return MaterialApp(
       title: 'BlaBlaClone',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      initialRoute: '/signin_signup',
+      theme: ThemeData.light(), // Светлая тема
+      darkTheme: ThemeData.dark(), // Темная тема
+      themeMode: isDarkTheme ? ThemeMode.dark : ThemeMode.light, // Переключение темной/светлой темы
+      initialRoute: '/signin_signup', // Начальный экран
       routes: {
         '/signin_signup': (context) => SignInSignUpScreen(),
         '/profile': (context) => ProfileScreen(),
