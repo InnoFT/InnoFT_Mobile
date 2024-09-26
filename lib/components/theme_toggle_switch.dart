@@ -25,7 +25,7 @@ class _ThemeToggleSwitchState extends ConsumerState<ThemeToggleSwitch> {
             width: 200, // Fixed width for the container
             padding: EdgeInsets.all(8.0), // Add padding for better appearance
             decoration: BoxDecoration(
-              color: isDarkTheme ? Colors.blue.shade900 : Colors.white, // Background color
+              color: isDarkTheme ? Colors.blue.shade900 : Colors.blue.shade200, // Background color
               borderRadius: BorderRadius.circular(10), // Rounded corners
               boxShadow: [
                 BoxShadow(
