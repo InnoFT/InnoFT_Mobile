@@ -23,9 +23,11 @@ TBI
 
 To set up the project locally, follow these steps:
 
-1. **Clone the repository:**
+1. **Clone the repository front branch: design:**
     ```bash
     git clone https://github.com/InnoFT/InnoFT_Mobile.git
+    git checkout design
+    git pull
     cd InnoFT_Mobile
     ```
 
@@ -37,12 +39,27 @@ To set up the project locally, follow these steps:
 3. **Set up environment variables:**
     Add any necessary environment variables required by the app (such as API keys).
 
-4. **Run the app:**
+4. **Clone the repository back branch: backend:**
+    ```bash
+    git clone https://github.com/InnoFT/InnoFT_Mobile.git
+    git checkout backend
+    git pull
+    cd InnoFT_Mobile
+    ```
+5. **Install dependencies:**
+    ```bash
+    go mod tidy
+    ```
+6. **Run the app:**
+    ```bash
+    go run main.go
+    ```
+
+7. **Run the app:**
     ```bash
     flutter run
     ```
-
-Make sure you have Flutter installed. If you don’t, follow the installation instructions on [Flutter's official website](https://flutter.dev/docs/get-started/install).
+Make sure you have Flutter and GO installed. If you don’t, follow the installation instructions on [Flutter's official website](https://flutter.dev/docs/get-started/install).
 
 ## Usage
 
