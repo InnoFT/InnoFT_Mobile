@@ -112,7 +112,7 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
       return;
     }
 
-        final url = Uri.parse('http://localhost:8069/tips/create');
+    final url = Uri.parse('http://localhost:8069/tips/create');
     try {
       final response = await http.post(
         url,
@@ -155,42 +155,61 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
   }
 
   Future<void> _selectStartTime(BuildContext context) async {
-    TimeOfDay? selectedTime = await showTimePicker(
+    DateTime? selectedDate = await showDatePicker(
       context: context,
-      initialTime: TimeOfDay.now(),
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
       builder: (BuildContext context, Widget? child) {
         return Theme(
           data: ThemeData.light().copyWith(
-            primaryColor: Colors.blue.shade700,
-            timePickerTheme: TimePickerThemeData(
-              dialHandColor: Colors.blue.shade700,
-              dialBackgroundColor: Colors.blue.shade100,
-              hourMinuteTextColor: WidgetStateColor.resolveWith((states) =>
-                  states.contains(WidgetState.selected)
-                      ? Colors.white
-                      : Colors.black),
-              hourMinuteShape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: BorderSide(color: Colors.blue.shade700, width: 2),
-              ),
-            ),
             colorScheme: ColorScheme.light(
               primary: Colors.blue.shade700,
+              onPrimary: Colors.white,
+              surface: Colors.blue.shade700,
               onSurface: Colors.black,
             ),
-            buttonTheme: ButtonThemeData(
-              textTheme: ButtonTextTheme.primary,
-            ),
+            dialogBackgroundColor: Colors.white,
           ),
           child: child!,
         );
       },
     );
 
-    if (selectedTime != null) {
-      setState(() {
-        startTimeController.text = selectedTime.format(context);
-      });
+    if (selectedDate != null) {
+      TimeOfDay? selectedTime = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.now(),
+        builder: (BuildContext context, Widget? child) {
+          return Theme(
+            data: ThemeData.light().copyWith(
+              colorScheme: ColorScheme.light(
+                primary: Colors.blue.shade700,
+              ),
+              timePickerTheme: TimePickerThemeData(
+                dialHandColor: Colors.blue.shade700,
+                dialBackgroundColor: Colors.blue.shade100,
+              ),
+            ),
+            child: child!,
+          );
+        },
+      );
+
+      if (selectedTime != null) {
+        final DateTime finalDateTime = DateTime(
+          selectedDate.year,
+          selectedDate.month,
+          selectedDate.day,
+          selectedTime.hour,
+          selectedTime.minute,
+        );
+
+        setState(() {
+          startTimeController.text =
+              "${finalDateTime.day.toString().padLeft(2, '0')}.${finalDateTime.month.toString().padLeft(2, '0')}.${finalDateTime.year} ${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')}";
+        });
+      }
     }
   }
 
