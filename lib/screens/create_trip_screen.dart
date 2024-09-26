@@ -6,8 +6,6 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class CreateTripScreen extends ConsumerStatefulWidget {
-  const CreateTripScreen({super.key});
-
   @override
   _CreateTripScreenState createState() => _CreateTripScreenState();
 }
@@ -20,6 +18,8 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
   LatLng? userLocation;
 
   TextEditingController availableSeatsController = TextEditingController();
+  TextEditingController carController =
+      TextEditingController(text: "Reno Logan");
   TextEditingController priceController = TextEditingController();
   TextEditingController commentsController = TextEditingController();
   TextEditingController startTimeController = TextEditingController();
@@ -47,7 +47,6 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
     }
   }
 
-  // Callback when map is tapped to set points and add markers
   void _onMapTapped(LatLng coordinates) {
     setState(() {
       if (startPoint == null) {
@@ -68,11 +67,10 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
         ));
         _getRouteAndDrawPolyline();
       } else {
-        // Reset the map: clear markers and route
-        mapController.clearSymbols(); // Clear markers
-        mapController.clearLines(); // Clear the drawn route
-        startPoint = coordinates; // Set the new pickup point
-        destinationPoint = null; // Reset destination
+        mapController.clearSymbols();
+        mapController.clearLines();
+        startPoint = coordinates;
+        destinationPoint = null;
         mapController.addSymbol(SymbolOptions(
           geometry: startPoint!,
           iconImage: "car-15",
@@ -113,6 +111,27 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
       _showErrorDialog("Please select both pickup and destination points.");
       return;
     }
+
+        final url = Uri.parse('http://localhost:8069/tips/create');
+    try {
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "total_seats": availableSeatsController.value,
+          "price_per_seat": priceController.value,
+          "start_latitude": startPoint!.latitude,
+          "start_longitude": startPoint!.longitude,
+          "end_latitude": destinationPoint!.latitude,
+          "end_longitude": destinationPoint!.longitude,
+        }),
+      );
+      if (response.statusCode != 200) {
+        _showErrorDialog('Error creating trip: ${response.statusCode}');
+      }
+    } catch (e) {
+      _showErrorDialog('Error creating trip: $e');
+    }
   }
 
   void _showErrorDialog(String message) {
@@ -120,14 +139,14 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Error'),
+          title: Text('Error'),
           content: Text(message),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: const Text('OK'),
+              child: Text('OK'),
             ),
           ],
         );
