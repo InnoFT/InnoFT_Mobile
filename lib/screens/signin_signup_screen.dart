@@ -178,8 +178,9 @@ class SignInSignUpScreen extends StatelessWidget {
                         SharedPreferences prefs =
                             await SharedPreferences.getInstance();
                         await prefs.setBool('rememberMe', true);
-						await prefs.setString('email', email);
-                        await prefs.setString('password', password);
+                        await prefs.setString('email', emailController.text);
+                        await prefs.setString(
+                            'password', passwordController.text);
                       }
 
                       Navigator.pop(context);
@@ -187,6 +188,8 @@ class SignInSignUpScreen extends StatelessWidget {
                         context,
                         MaterialPageRoute(builder: (_) => ProfileScreen()),
                       );
+                    } catch (err) {
+                      _showErrorDialog(context, "Error logging in: $err");
                     }
                   },
                   child: Text('Enter', style: TextStyle(color: Colors.green)),
@@ -416,7 +419,7 @@ class SignInSignUpScreen extends StatelessWidget {
                         if (rememberMe) {
                           SharedPreferences prefs =
                               await SharedPreferences.getInstance();
-						  await prefs.setString('email', email);
+                          await prefs.setString('email', email);
                           await prefs.setString('phone', phone);
                           await prefs.setString('password', password);
                           await prefs.setBool('isDriver', isDriver);
