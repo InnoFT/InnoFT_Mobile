@@ -47,8 +47,17 @@ class SignInSignUpScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(30),
                     ),
                   ),
-                  onPressed: () {
-                    _showSignInDialog(context);
+                  onPressed: () async {
+                    SharedPreferences prefs =
+                            await SharedPreferences.getInstance();
+                    if (prefs.getBool('isLoggedIn') == true){
+                       Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                      );
+                    } else {
+                     _showSignInDialog(context);
+                    }
                   },
                   child: const Text("Sign In", style: TextStyle(fontSize: 18)),
                 ),
@@ -179,6 +188,7 @@ class SignInSignUpScreen extends StatelessWidget {
                         await prefs.setString('email', emailController.text);
                         await prefs.setString(
                             'password', passwordController.text);
+                        await prefs.setBool('isLoggedIn', true);
                       }
 
                       Navigator.pop(context);
@@ -191,12 +201,6 @@ class SignInSignUpScreen extends StatelessWidget {
                     }
                   },
                   child: const Text('Enter', style: TextStyle(color: Colors.green)),
-                ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text('Cancel', style: TextStyle(color: Colors.red)),
                 ),
               ],
             );
@@ -419,6 +423,7 @@ class SignInSignUpScreen extends StatelessWidget {
                           await prefs.setString('password', password);
                           await prefs.setBool('isDriver', isDriver);
                           await prefs.setBool('rememberMe', true);
+                          await prefs.setBool('isLoggedIn', true);
                         }
 
                         Navigator.pop(context);
@@ -438,12 +443,6 @@ class SignInSignUpScreen extends StatelessWidget {
                     }
                   },
                   child: const Text('Enter', style: TextStyle(color: Colors.green)),
-                ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text('Cancel', style: TextStyle(color: Colors.red)),
                 ),
               ],
             );

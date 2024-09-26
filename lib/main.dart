@@ -22,7 +22,7 @@ class MyApp extends ConsumerWidget {
     final isDarkTheme = ref.watch(themeNotifierProvider); // Получаем текущую тему через Riverpod
 
     return MaterialApp(
-      title: 'BlaBlaClone',
+      title: 'InnoFT',
       theme: ThemeData.light(), // Светлая тема
       darkTheme: ThemeData.dark(), // Темная тема
       themeMode: isDarkTheme ? ThemeMode.dark : ThemeMode.light, // Переключение темной/светлой темы

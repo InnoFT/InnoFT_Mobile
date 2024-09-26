@@ -153,18 +153,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
+  // Future<bool?> _isDriver() async {
+  //   SharedPreferences prefs = await SharedPreferences.getInstance();
+  //   return prefs.getBool("isDriver");
+  // }
+
   @override
   Widget build(BuildContext context) {
     final activeTrips = ref
         .watch(activeTripsProvider); // Получаем активные поездки из провайдера
     final tripHistory = ref
         .watch(tripHistoryProvider); // Получаем историю поездок из провайдера
-
     return DefaultTabController(
       length: 4,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Profile Screen'),
+          title: Text("InnoFellowTravelers"),
           bottom: const TabBar(
             tabs: [
               Tab(text: 'Settings', icon: Icon(Icons.settings)),
