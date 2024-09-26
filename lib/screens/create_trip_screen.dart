@@ -11,29 +11,25 @@ class CreateTripScreen extends ConsumerStatefulWidget {
 }
 
 class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
-  // Mapbox controller
   late MapboxMapController mapController;
 
-  // Coordinates for start and destination points
   LatLng? startPoint;
   LatLng? destinationPoint;
-
-  // User location
   LatLng? userLocation;
 
-  // Text controllers for trip details
   TextEditingController availableSeatsController = TextEditingController();
-  TextEditingController carController = TextEditingController();
+  TextEditingController carController =
+      TextEditingController(text: "Reno Logan");
   TextEditingController priceController = TextEditingController();
   TextEditingController commentsController = TextEditingController();
+  TextEditingController startTimeController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _determinePosition(); // Get user location on initialization
+    _determinePosition();
   }
 
-  // Get current position of the user
   Future<void> _determinePosition() async {
     Position position = await Geolocator.getCurrentPosition();
     setState(() {
@@ -41,7 +37,6 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
     });
   }
 
-  // Callback when map is tapped to set points and add markers
   void _onMapTapped(LatLng coordinates) {
     setState(() {
       if (startPoint == null) {
@@ -49,25 +44,23 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
         startPoint = coordinates;
         mapController.addSymbol(SymbolOptions(
           geometry: startPoint!,
-          iconImage: "car-15", // Pickup point icon
-          iconSize: 2.5, // Make the marker bigger
+          iconImage: "car-15",
+          iconSize: 2.5,
         ));
       } else if (destinationPoint == null) {
         // Set destination point
         destinationPoint = coordinates;
         mapController.addSymbol(SymbolOptions(
           geometry: destinationPoint!,
-          iconImage: "castle-15", // Destination point icon
-          iconSize: 2.5, // Make the marker bigger
+          iconImage: "castle-15",
+          iconSize: 2.5,
         ));
-        // Once both points are set, fetch and draw the route
         _getRouteAndDrawPolyline();
       } else {
-        // Reset the map: clear markers and route
-        mapController.clearSymbols();  // Clear markers
-        mapController.clearLines();    // Clear the drawn route
-        startPoint = coordinates;      // Set the new pickup point
-        destinationPoint = null;       // Reset destination
+        mapController.clearSymbols();
+        mapController.clearLines();
+        startPoint = coordinates;
+        destinationPoint = null;
         mapController.addSymbol(SymbolOptions(
           geometry: startPoint!,
           iconImage: "car-15",
@@ -77,11 +70,11 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
     });
   }
 
-  // Fetch route from Mapbox Directions API and draw polyline
   Future<void> _getRouteAndDrawPolyline() async {
     if (startPoint == null || destinationPoint == null) return;
 
-    final String apiKey = 'pk.eyJ1IjoibGVsb25vdjIzIiwiYSI6ImNtMWlqc2YxbTBtb3EyanMyMDFyYXU2bGMifQ.tk-A8ed40Avnbu_-NXM69g';
+    final String apiKey =
+        'pk.eyJ1IjoibGVsb25vdjIzIiwiYSI6ImNtMWlqc2YxbTBtb3EyanMyMDFyYXU2bGMifQ.tk-A8ed40Avnbu_-NXM69g';
     final String url =
         'https://api.mapbox.com/directions/v5/mapbox/driving/${startPoint!.longitude},${startPoint!.latitude};${destinationPoint!.longitude},${destinationPoint!.latitude}?geometries=geojson&access_token=$apiKey';
 
@@ -90,13 +83,12 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       final route = data['routes'][0]['geometry']['coordinates'] as List;
-      List<LatLng> polylineCoordinates = route
-          .map((coord) => LatLng(coord[1], coord[0]))
-          .toList(); // Reversing to LatLng format
+      List<LatLng> polylineCoordinates =
+          route.map((coord) => LatLng(coord[1], coord[0])).toList();
 
       mapController.addLine(LineOptions(
         geometry: polylineCoordinates,
-        lineColor: "#ff0000", // Red color for the line
+        lineColor: "#0000FF",
         lineWidth: 5.0,
       ));
     } else {
@@ -104,20 +96,11 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
     }
   }
 
-  // Function to create the trip using input data
   void _createTrip() {
     if (startPoint == null || destinationPoint == null) {
       _showErrorDialog("Please select both pickup and destination points.");
       return;
     }
-
-    // You can handle trip creation logic here
-    print("Trip created with the following data:");
-    print("Pickup: $startPoint, Destination: $destinationPoint");
-    print("Available Seats: ${availableSeatsController.text}");
-    print("Car: ${carController.text}");
-    print("Price per Passenger: ${priceController.text}");
-    print("Comments: ${commentsController.text}");
   }
 
   void _showErrorDialog(String message) {
@@ -140,133 +123,218 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
     );
   }
 
+  Future<void> _selectStartTime(BuildContext context) async {
+    TimeOfDay? selectedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+      builder: (BuildContext context, Widget? child) {
+        return Theme(
+          data: ThemeData.light().copyWith(
+            primaryColor: Colors.blue.shade700,
+            timePickerTheme: TimePickerThemeData(
+              dialHandColor: Colors.blue.shade700,
+              dialBackgroundColor: Colors.blue.shade100,
+              hourMinuteTextColor: WidgetStateColor.resolveWith((states) =>
+                  states.contains(WidgetState.selected)
+                      ? Colors.white
+                      : Colors.black),
+              hourMinuteShape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(color: Colors.blue.shade700, width: 2),
+              ),
+            ),
+            colorScheme: ColorScheme.light(
+              primary: Colors.blue.shade700,
+              onSurface: Colors.black,
+            ),
+            buttonTheme: ButtonThemeData(
+              textTheme: ButtonTextTheme.primary,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (selectedTime != null) {
+      setState(() {
+        startTimeController.text = selectedTime.format(context);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Create a Trip"),
-        backgroundColor: Colors.teal,
-      ),
-      body: userLocation == null
-          ? Center(child: CircularProgressIndicator()) // Show loader until user location is fetched
-          : SingleChildScrollView( // Make the screen scrollable to avoid overflow
-              child: Column(
-                children: [
-                  // Map for selecting pickup and destination
-                  SizedBox(
-                    height: 400,
-                    child: MapboxMap(
-                      accessToken: 'pk.eyJ1IjoibGVsb25vdjIzIiwiYSI6ImNtMWlqc2YxbTBtb3EyanMyMDFyYXU2bGMifQ.tk-A8ed40Avnbu_-NXM69g',
-                      onMapCreated: (controller) => mapController = controller,
-                      onMapClick: (point, coordinates) => _onMapTapped(coordinates),
-                      initialCameraPosition: CameraPosition(
-                        target: userLocation!,
-                        zoom: 14.0,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Container(
+              color: Colors.blue.shade900.withOpacity(0.8),
+            ),
+          ),
+          userLocation == null
+              ? Center(child: CircularProgressIndicator())
+              : SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        height: 400,
+                        child: MapboxMap(
+                          accessToken:
+                              'pk.eyJ1IjoibGVsb25vdjIzIiwiYSI6ImNtMWlqc2YxbTBtb3EyanMyMDFyYXU2bGMifQ.tk-A8ed40Avnbu_-NXM69g',
+                          onMapCreated: (controller) =>
+                              mapController = controller,
+                          onMapClick: (point, coordinates) =>
+                              _onMapTapped(coordinates),
+                          initialCameraPosition: CameraPosition(
+                            target: userLocation!,
+                            zoom: 14.0,
+                          ),
+                          myLocationEnabled: true,
+                        ),
                       ),
-                      myLocationEnabled: true,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Display pickup point
-                        if (startPoint != null) ...[
-                          Row(
-                            children: [
-                              Icon(Icons.location_on, color: Colors.green),
-                              SizedBox(width: 10),
-                              Text(
-                                "Pickup Point: ${startPoint!.latitude}, ${startPoint!.longitude}",
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Display pickup point
+                            if (startPoint != null) ...[
+                              Row(
+                                children: [
+                                  Icon(Icons.location_on, color: Colors.green),
+                                  SizedBox(width: 10),
+                                  Text(
+                                    "Pickup Point: ${startPoint!.latitude}, ${startPoint!.longitude}",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
-                          ),
-                        ],
-                        // Display destination point
-                        if (destinationPoint != null) ...[
-                          SizedBox(height: 10),
-                          Row(
-                            children: [
-                              Icon(Icons.flag, color: Colors.red),
-                              SizedBox(width: 10),
-                              Text(
-                                "Destination Point: ${destinationPoint!.latitude}, ${destinationPoint!.longitude}",
-                                style: TextStyle(fontWeight: FontWeight.bold),
+
+                            if (destinationPoint != null) ...[
+                              SizedBox(height: 10),
+                              Row(
+                                children: [
+                                  Icon(Icons.flag, color: Colors.red),
+                                  SizedBox(width: 10),
+                                  Text(
+                                    "Destination Point: ${destinationPoint!.latitude}, ${destinationPoint!.longitude}",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
-                          ),
-                        ],
-                        SizedBox(height: 20),
-                        // Form for trip details
-                        Card(
-                          elevation: 2,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                TextField(
-                                  controller: availableSeatsController,
-                                  decoration: InputDecoration(
-                                    labelText: "Available Seats",
-                                    border: OutlineInputBorder(),
-                                  ),
-                                  keyboardType: TextInputType.number,
-                                ),
-                                SizedBox(height: 10),
-                                TextField(
-                                  controller: carController,
-                                  decoration: InputDecoration(
-                                    labelText: "Car",
-                                    border: OutlineInputBorder(),
-                                  ),
-                                ),
-                                SizedBox(height: 10),
-                                TextField(
-                                  controller: priceController,
-                                  decoration: InputDecoration(
-                                    labelText: "Price per Passenger",
-                                    border: OutlineInputBorder(),
-                                  ),
-                                  keyboardType: TextInputType.number,
-                                ),
-                                SizedBox(height: 10),
-                                TextField(
-                                  controller: commentsController,
-                                  decoration: InputDecoration(
-                                    labelText: "Comments",
-                                    border: OutlineInputBorder(),
-                                  ),
-                                  maxLines: 3,
-                                ),
-                                SizedBox(height: 20),
-                                Center(
-                                  child: ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.teal,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(20),
+                            SizedBox(height: 20),
+
+                            Card(
+                              color: Colors.blue.shade50.withOpacity(0.9),
+                              elevation: 2,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    TextField(
+                                      controller: availableSeatsController,
+                                      decoration: InputDecoration(
+                                        labelText: "Available Seats",
+                                        labelStyle: TextStyle(
+                                          color: Colors.blue.shade900,
+                                        ),
+                                        border: OutlineInputBorder(),
+                                      ),
+                                      keyboardType: TextInputType.number,
+                                    ),
+                                    SizedBox(height: 10),
+                                    TextField(
+                                      controller: carController,
+                                      decoration: InputDecoration(
+                                        labelText: "Car",
+                                        labelStyle: TextStyle(
+                                          color: Colors.blue.shade900,
+                                        ),
+                                        border: OutlineInputBorder(),
                                       ),
                                     ),
-                                    onPressed: _createTrip,
-                                    child: Text("Create Trip"),
-                                  ),
+                                    SizedBox(height: 10),
+                                    TextField(
+                                      controller: priceController,
+                                      decoration: InputDecoration(
+                                        labelText: "Price per Passenger",
+                                        labelStyle: TextStyle(
+                                          color: Colors.blue.shade900,
+                                        ),
+                                        border: OutlineInputBorder(),
+                                      ),
+                                      keyboardType: TextInputType.number,
+                                    ),
+                                    SizedBox(height: 10),
+                                    TextField(
+                                      controller: startTimeController,
+                                      decoration: InputDecoration(
+                                        labelText: "Start Time",
+                                        labelStyle: TextStyle(
+                                          color: Colors.blue.shade900,
+                                        ),
+                                        border: OutlineInputBorder(),
+                                      ),
+                                      readOnly: true,
+                                      onTap: () => _selectStartTime(context),
+                                    ),
+                                    SizedBox(height: 10),
+                                    TextField(
+                                      controller: commentsController,
+                                      decoration: InputDecoration(
+                                        labelText: "Comments",
+                                        labelStyle: TextStyle(
+                                          color: Colors.blue.shade900,
+                                        ),
+                                        border: OutlineInputBorder(),
+                                      ),
+                                      maxLines: 3,
+                                    ),
+                                    SizedBox(height: 20),
+                                    Center(
+                                      child: ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.blue.shade700
+                                              .withOpacity(0.9),
+                                          foregroundColor: Colors.white,
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 50, vertical: 15),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(30),
+                                          ),
+                                        ),
+                                        onPressed: _createTrip,
+                                        child: Text("Create Trip",
+                                            style: TextStyle(fontSize: 18)),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
+                              ),
                             ),
-                          ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
+                ),
+        ],
+      ),
     );
   }
 }

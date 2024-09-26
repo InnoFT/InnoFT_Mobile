@@ -28,16 +28,15 @@ class SignInSignUpScreen extends StatelessWidget {
                 Text(
                   "InnoFellowTravelers",
                   style: TextStyle(
-                    color: Colors.white, // Dark blue color
-                    fontSize: 28, // Font size
-                    fontWeight: FontWeight.bold, // Bold text style
+                    color: Colors.white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
                 SizedBox(height: 40),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue.shade700
-                        .withOpacity(0.9), // Dark blue background
+                    backgroundColor: Colors.blue.shade700.withOpacity(0.9),
                     foregroundColor: Colors.white,
                     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
                     shape: RoundedRectangleBorder(
@@ -52,8 +51,7 @@ class SignInSignUpScreen extends StatelessWidget {
                 SizedBox(height: 20),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue.shade900
-                        .withOpacity(0.9), // Darker blue background
+                    backgroundColor: Colors.blue.shade900.withOpacity(0.9),
                     foregroundColor: Colors.white,
                     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
                     shape: RoundedRectangleBorder(
@@ -175,11 +173,10 @@ class SignInSignUpScreen extends StatelessWidget {
                             await SharedPreferences.getInstance();
                         await prefs.setString('email', email);
                         await prefs.setString('password', password);
-                        await prefs.setBool(
-                            'isLoggedIn', true); // Save login status
+                        await prefs.setBool('isLoggedIn', true);
                       }
 
-                      Navigator.pop(context); // Close dialog
+                      Navigator.pop(context);
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(builder: (_) => ProfileScreen()),
@@ -222,14 +219,13 @@ class SignInSignUpScreen extends StatelessWidget {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
-              backgroundColor:
-                  Colors.blue.shade50.withOpacity(0.9), // Light blue background
+              backgroundColor: Colors.blue.shade50.withOpacity(0.9),
               title: Text(
                 'Sign Up',
                 style: TextStyle(
                   color: Colors.blue.shade900,
                   fontWeight: FontWeight.bold,
-                  fontSize: 24, // Larger title font size
+                  fontSize: 24,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -242,12 +238,11 @@ class SignInSignUpScreen extends StatelessWidget {
                       labelText: 'Name',
                       labelStyle: TextStyle(
                         color: Colors.blue.shade900,
-                        fontSize: 16, // Consistent font size
+                        fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
                       enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(
-                            color: Colors.blue.shade700), // Blue underline
+                        borderSide: BorderSide(color: Colors.blue.shade700),
                       ),
                     ),
                   ),
@@ -319,7 +314,7 @@ class SignInSignUpScreen extends StatelessWidget {
                     children: [
                       Checkbox(
                         value: rememberMe,
-                        activeColor: Colors.blue.shade700, // Styled checkbox
+                        activeColor: Colors.blue.shade700,
                         onChanged: (value) {
                           setState(() {
                             rememberMe = value!;
@@ -330,7 +325,7 @@ class SignInSignUpScreen extends StatelessWidget {
                         "Remember me",
                         style: TextStyle(
                           color: Colors.blue.shade900,
-                          fontSize: 16, // Consistent font size
+                          fontSize: 16,
                         ),
                       ),
                     ],
@@ -344,8 +339,7 @@ class SignInSignUpScreen extends StatelessWidget {
                             color: Colors.blue.shade900, fontSize: 16),
                       ),
                       Switch(
-                        activeColor:
-                            Colors.blue.shade700, // Styled switch color
+                        activeColor: Colors.blue.shade700,
                         value: isDriver,
                         onChanged: (value) {
                           setState(() {
@@ -456,15 +450,14 @@ class SignInSignUpScreen extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          backgroundColor:
-              Colors.blue.shade50.withOpacity(0.9), // Styled dialog background
+          backgroundColor: Colors.blue.shade50.withOpacity(0.9),
           title: Center(
             child: Text(
               'Error',
               style: TextStyle(
                 color: Colors.blue.shade900,
                 fontWeight: FontWeight.bold,
-                fontSize: 20, // Font size for error title
+                fontSize: 20,
               ),
             ),
           ),
