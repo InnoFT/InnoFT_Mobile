@@ -140,12 +140,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               itemCount: activeTrips.length,
               itemBuilder: (context, index) {
                 final trip = activeTrips[index];
-                return ListTile(
-                  title: Text('From ${trip['from']} to ${trip['to']}'),
-                  subtitle: Text('Departure: ${trip['departure']}'),
-                  onTap: () => _showTripDetailsDialog(
-                      context, trip), // Открываем диалог при нажатии
-                );
+                return _buildTripItem(trip); // Отображаем каждую поездку
               },
             ),
 
@@ -179,8 +174,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  // Метод для показа диалога с деталями поездки
-  void _showTripDetailsDialog(BuildContext context, Map<String, String> trip) {
+  // Виджет для активных поездок с возможностью завершить поездку
+  Widget _buildTripItem(Map<String, String> trip) {
+    return ListTile(
+      title: Text('From ${trip['from']} to ${trip['to']}'),
+      subtitle: Text('Departure: ${trip['departure']}'),
+      trailing: trip['driver'] == 'your'
+          ? Text('(your)', style: TextStyle(color: Colors.blue))
+          : null,
+      onTap: () => _showTripDetailsDialog(trip),
+    );
+  }
+
+  // Диалог с деталями поездки и кнопкой Finish для ваших поездок
+  void _showTripDetailsDialog(Map<String, String> trip) {
     showDialog(
       context: context,
       builder: (context) {
@@ -195,8 +202,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               Text('Departure: ${trip['departure']}'),
               Text('Arrival: ${trip['arrival']}'),
               Text('Seats: ${trip['availableSeats']}/${trip['totalSeats']}'),
-              Text('Driver: ${trip['driverName']}'),
-              Text('Driver Phone: ${trip['driverPhone']}'),
+              Text('Driver: ${trip['driver']}'),
             ],
           ),
           actions: [
@@ -211,10 +217,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ref
                     .read(activeTripsProvider.notifier)
                     .removeTrip(trip); // Удаляем поездку из активных
-                Navigator.pop(context); // Закрываем диалог
+                Navigator.pop(context);
               },
               child: Text('Cancel'),
             ),
+            if (trip['driver'] == 'your') ...[
+              TextButton(
+                onPressed: () {
+                  ref
+                      .read(activeTripsProvider.notifier)
+                      .removeTrip(trip); // Удаляем из активных
+                  ref.read(tripHistoryProvider.notifier).addTripToHistory(
+                      '${trip['from']} to ${trip['to']}'); // Добавляем в историю
+                  Navigator.pop(context);
+                },
+                child: Text('Finish'),
+              ),
+            ],
           ],
         );
       },
