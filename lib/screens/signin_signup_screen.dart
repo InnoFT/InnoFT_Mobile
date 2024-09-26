@@ -6,6 +6,8 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:inno_ft/services/auth_service.dart';
 import 'profile_screen.dart';
+import 'package:http/http.dart' as http;
+import '../components/theme_toggle_switch.dart'; // Import your ThemeToggleSwitch component
 
 class SignInSignUpScreen extends StatelessWidget {
   final AuthController _authController = AuthController();
@@ -74,10 +76,19 @@ class SignInSignUpScreen extends StatelessWidget {
               ],
             ),
           ),
+          // Wrap the ThemeToggleSwitch with SafeArea and Position it
+          SafeArea(
+            child: Positioned(
+              bottom: 20,
+              left: 20,
+              child: ThemeToggleSwitch(), // Ensure it stays in a visible corner
+            ),
+          ),
         ],
       ),
     );
   }
+
 
   void _showSignInDialog(BuildContext context) {
     TextEditingController emailController = TextEditingController();
@@ -606,16 +617,15 @@ class SignInSignUpScreen extends StatelessWidget {
 }
 
 
-  // Phone validation
-  bool _isPhoneValid(String phone) {
-    final RegExp phoneRegex = RegExp(r'^(\+7|8)\d{10}$');
-    return phoneRegex.hasMatch(phone);
-  }
-
   // Email validation
   bool _isEmailValid(String email) {
     final RegExp emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
     return emailRegex.hasMatch(email);
+  }
+
+  bool _isPhoneValid(String phone) {
+    final RegExp phoneRegex = RegExp(r'^(\+7|8)\d{10}$');
+    return phoneRegex.hasMatch(phone);
   }
 
   bool _isPasswordValid(String password) {

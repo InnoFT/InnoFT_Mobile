@@ -31,7 +31,6 @@ class MyApp extends ConsumerWidget {
         '/splash': (context) => SplashScreen(),
         '/signin_signup': (context) => SignInSignUpScreen(),
         '/profile': (context) => ProfileScreen(),
-        '/settings': (context) => SettingsScreen(),
         '/create_trip': (context) => CreateTripScreen(),
         '/find_trip': (context) => FindTripScreen(),
       },

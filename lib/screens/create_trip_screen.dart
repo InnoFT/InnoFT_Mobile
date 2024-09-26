@@ -26,6 +26,7 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
       TextEditingController(text: "Reno Logan");
   TextEditingController priceController = TextEditingController();
   TextEditingController commentsController = TextEditingController();
+  TextEditingController startDateController = TextEditingController();
   TextEditingController startTimeController = TextEditingController();
 
   @override
@@ -70,7 +71,6 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
   void _onMapTapped(LatLng coordinates) {
     setState(() {
       if (startPoint == null) {
-        // Set pickup point
         startPoint = coordinates;
         mapController.addSymbol(SymbolOptions(
           geometry: startPoint!,
@@ -78,7 +78,6 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
           iconSize: 2.5,
         ));
       } else if (destinationPoint == null) {
-        // Set destination point
         destinationPoint = coordinates;
         mapController.addSymbol(SymbolOptions(
           geometry: destinationPoint!,
@@ -133,11 +132,14 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
       return;
     }
 
-        final url = Uri.parse('http://localhost:8069/trips/create');
+    String combinedDateTime =
+        "${startDateController.text} ${startTimeController.text}";
+
+    final url = Uri.parse('http://localhost:8069/trips/create');
     try {
       final response = await http.post(
         url,
-        headers: {"Content-Type": "application/json", "Authorization": token!},
+        headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "total_seats": availableSeatsController.text,
           "price_per_seat": priceController.text,
@@ -145,6 +147,7 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
           "start_longitude": startPoint!.longitude,
           "end_latitude": destinationPoint!.latitude,
           "end_longitude": destinationPoint!.longitude,
+          "start_time": combinedDateTime,
         }),
       );
       if (response.statusCode != 200) {
@@ -175,32 +178,54 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
     );
   }
 
-  Future<void> _selectStartTime(BuildContext context) async {
-    TimeOfDay? selectedTime = await showTimePicker(
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? selectedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+      builder: (BuildContext context, Widget? child) {
+        return Theme(
+          data: ThemeData.light().copyWith(
+            colorScheme: ColorScheme.light(
+              surface: Colors.blue.shade900,
+              onSurface: Colors.white,
+              secondary: Colors.blue.shade700,
+              onSecondary: Colors.white,
+            ),
+            dialogBackgroundColor: Colors.blue.shade900,
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (selectedDate != null) {
+      setState(() {
+        startDateController.text =
+            "${selectedDate.day.toString().padLeft(2, '0')}.${selectedDate.month.toString().padLeft(2, '0')}.${selectedDate.year}";
+      });
+    }
+  }
+
+  Future<void> _selectTime(BuildContext context) async {
+    final TimeOfDay? selectedTime = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
       builder: (BuildContext context, Widget? child) {
         return Theme(
           data: ThemeData.light().copyWith(
-            primaryColor: Colors.blue.shade700,
+            colorScheme: ColorScheme.light(
+              primary: Colors.blue.shade700,
+            ),
             timePickerTheme: TimePickerThemeData(
               dialHandColor: Colors.blue.shade700,
               dialBackgroundColor: Colors.blue.shade100,
-              hourMinuteTextColor: WidgetStateColor.resolveWith((states) =>
-                  states.contains(WidgetState.selected)
-                      ? Colors.white
-                      : Colors.black),
-              hourMinuteShape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: BorderSide(color: Colors.blue.shade700, width: 2),
-              ),
-            ),
-            colorScheme: ColorScheme.light(
-              primary: Colors.blue.shade700,
-              onSurface: Colors.black,
-            ),
-            buttonTheme: ButtonThemeData(
-              textTheme: ButtonTextTheme.primary,
             ),
           ),
           child: child!,
@@ -210,7 +235,8 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
 
     if (selectedTime != null) {
       setState(() {
-        startTimeController.text = selectedTime.format(context);
+        startTimeController.text =
+            "${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')}";
       });
     }
   }
@@ -332,19 +358,37 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
                                       keyboardType: TextInputType.number,
                                     ),
                                     SizedBox(height: 10),
+
+                                    // Date picker field
                                     TextField(
-                                      controller: startTimeController,
+                                      controller: startDateController,
                                       decoration: InputDecoration(
-                                        labelText: "Start Time",
+                                        labelText: "Select Date",
                                         labelStyle: TextStyle(
                                           color: Colors.blue.shade900,
                                         ),
                                         border: OutlineInputBorder(),
                                       ),
                                       readOnly: true,
-                                      onTap: () => _selectStartTime(context),
+                                      onTap: () => _selectDate(context),
                                     ),
                                     SizedBox(height: 10),
+
+                                    // Time picker field
+                                    TextField(
+                                      controller: startTimeController,
+                                      decoration: InputDecoration(
+                                        labelText: "Select Time",
+                                        labelStyle: TextStyle(
+                                          color: Colors.blue.shade900,
+                                        ),
+                                        border: OutlineInputBorder(),
+                                      ),
+                                      readOnly: true,
+                                      onTap: () => _selectTime(context),
+                                    ),
+                                    SizedBox(height: 10),
+
                                     TextField(
                                       controller: commentsController,
                                       decoration: InputDecoration(
