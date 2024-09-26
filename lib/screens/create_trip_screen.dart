@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
-import '../components/trip_provider.dart'; // Импортируем провайдер поездок
+import 'package:mapbox_gl/mapbox_gl.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class CreateTripScreen extends ConsumerStatefulWidget {
   @override
@@ -9,125 +11,115 @@ class CreateTripScreen extends ConsumerStatefulWidget {
 }
 
 class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
-  // Контроллеры для полей ввода
-  TextEditingController startPointController = TextEditingController();
-  TextEditingController destinationController = TextEditingController();
-  TextEditingController startTimeController = TextEditingController();
-  TextEditingController finishTimeController = TextEditingController();
-  TextEditingController startDateController = TextEditingController();
-  TextEditingController finishDateController = TextEditingController();
+  // Mapbox controller
+  late MapboxMapController mapController;
+
+  // Coordinates for start and destination points
+  LatLng? startPoint;
+  LatLng? destinationPoint;
+
+  // User location
+  LatLng? userLocation;
+
+  // Text controllers for trip details
   TextEditingController availableSeatsController = TextEditingController();
   TextEditingController carController = TextEditingController();
   TextEditingController priceController = TextEditingController();
   TextEditingController commentsController = TextEditingController();
 
-  // Функция для выбора времени
-  Future<void> _selectTime(BuildContext context, TextEditingController controller) async {
-    TimeOfDay? pickedTime = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-    );
-    if (pickedTime != null) {
-      final now = DateTime.now();
-      final formattedTime = DateFormat('HH:mm').format(
-        DateTime(now.year, now.month, now.day, pickedTime.hour, pickedTime.minute),
-      );
-      controller.text = formattedTime;
+  @override
+  void initState() {
+    super.initState();
+    _determinePosition(); // Get user location on initialization
+  }
+
+  // Get current position of the user
+  Future<void> _determinePosition() async {
+    Position position = await Geolocator.getCurrentPosition();
+    setState(() {
+      userLocation = LatLng(position.latitude, position.longitude);
+    });
+  }
+
+  // Callback when map is tapped to set points and add markers
+  void _onMapTapped(LatLng coordinates) {
+    setState(() {
+      if (startPoint == null) {
+        // Set pickup point
+        startPoint = coordinates;
+        mapController.addSymbol(SymbolOptions(
+          geometry: startPoint!,
+          iconImage: "car-15", // Pickup point icon
+          iconSize: 2.5, // Make the marker bigger
+        ));
+      } else if (destinationPoint == null) {
+        // Set destination point
+        destinationPoint = coordinates;
+        mapController.addSymbol(SymbolOptions(
+          geometry: destinationPoint!,
+          iconImage: "castle-15", // Destination point icon
+          iconSize: 2.5, // Make the marker bigger
+        ));
+        // Once both points are set, fetch and draw the route
+        _getRouteAndDrawPolyline();
+      } else {
+        // Reset the map: clear markers and route
+        mapController.clearSymbols();  // Clear markers
+        mapController.clearLines();    // Clear the drawn route
+        startPoint = coordinates;      // Set the new pickup point
+        destinationPoint = null;       // Reset destination
+        mapController.addSymbol(SymbolOptions(
+          geometry: startPoint!,
+          iconImage: "car-15",
+          iconSize: 2.5,
+        ));
+      }
+    });
+  }
+
+  // Fetch route from Mapbox Directions API and draw polyline
+  Future<void> _getRouteAndDrawPolyline() async {
+    if (startPoint == null || destinationPoint == null) return;
+
+    final String apiKey = 'pk.eyJ1IjoibGVsb25vdjIzIiwiYSI6ImNtMWlqc2YxbTBtb3EyanMyMDFyYXU2bGMifQ.tk-A8ed40Avnbu_-NXM69g';
+    final String url =
+        'https://api.mapbox.com/directions/v5/mapbox/driving/${startPoint!.longitude},${startPoint!.latitude};${destinationPoint!.longitude},${destinationPoint!.latitude}?geometries=geojson&access_token=$apiKey';
+
+    final response = await http.get(Uri.parse(url));
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final route = data['routes'][0]['geometry']['coordinates'] as List;
+      List<LatLng> polylineCoordinates = route
+          .map((coord) => LatLng(coord[1], coord[0]))
+          .toList(); // Reversing to LatLng format
+
+      mapController.addLine(LineOptions(
+        geometry: polylineCoordinates,
+        lineColor: "#ff0000", // Red color for the line
+        lineWidth: 5.0,
+      ));
+    } else {
+      print('Error fetching route: ${response.statusCode}');
     }
   }
 
-  // Функция для выбора даты
-  Future<void> _selectDate(BuildContext context, TextEditingController controller) async {
-    DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime(2101),
-    );
-    if (pickedDate != null) {
-      final formattedDate = DateFormat('yyyy-MM-dd').format(pickedDate);
-      controller.text = formattedDate;
-    }
-  }
-
-  // Функция для проверки заполненности всех полей, проверки на дату и цифры
-  bool _validateFields() {
-    if (startPointController.text.isEmpty ||
-        destinationController.text.isEmpty ||
-        startTimeController.text.isEmpty ||
-        finishTimeController.text.isEmpty ||
-        startDateController.text.isEmpty ||
-        finishDateController.text.isEmpty ||
-        availableSeatsController.text.isEmpty ||
-        carController.text.isEmpty ||
-        priceController.text.isEmpty) {
-      _showErrorDialog("All fields except comments must be filled.");
-      return false;
-    }
-    
-    if (!_isNumeric(availableSeatsController.text)) {
-      _showErrorDialog("Available seats must be a numeric value.");
-      return false;
-    }
-    
-    if (!_isNumeric(priceController.text)) {
-      _showErrorDialog("Price must be a numeric value.");
-      return false;
+  // Function to create the trip using input data
+  void _createTrip() {
+    if (startPoint == null || destinationPoint == null) {
+      _showErrorDialog("Please select both pickup and destination points.");
+      return;
     }
 
-    DateTime startDateTime = DateTime.parse('${startDateController.text} ${startTimeController.text}');
-    DateTime finishDateTime = DateTime.parse('${finishDateController.text} ${finishTimeController.text}');
-    
-    if (finishDateTime.isBefore(startDateTime)) {
-      _showErrorDialog("Arrival date/time cannot be earlier than departure date/time.");
-      return false;
-    }
-
-    return true;
+    // You can handle trip creation logic here
+    print("Trip created with the following data:");
+    print("Pickup: $startPoint, Destination: $destinationPoint");
+    print("Available Seats: ${availableSeatsController.text}");
+    print("Car: ${carController.text}");
+    print("Price per Passenger: ${priceController.text}");
+    print("Comments: ${commentsController.text}");
   }
 
-  // Проверка на числовые значения
-  bool _isNumeric(String value) {
-    return double.tryParse(value) != null;
-  }
-
-  // Функция для проверки времени отправления
-bool _isDepartureTimeValid() {
-  DateTime now = DateTime.now();
-  DateTime startDateTime = DateTime.parse('${startDateController.text} ${startTimeController.text}');
-  
-  if (startDateTime.isBefore(now)) {
-    _showErrorDialog("Departure date/time cannot be earlier than the current date/time.");
-    return false;
-  }
-  
-  return true;
-}
-
-// Функция для создания поездки
-void _createTrip() {
-  if (_validateFields() && _isDepartureTimeValid()) {
-    // Создаем поездку и добавляем в провайдер активных поездок
-    final newTrip = {
-      'from': startPointController.text,
-      'to': destinationController.text,
-      'departure': '${startDateController.text} ${startTimeController.text}',
-      'arrival': '${finishDateController.text} ${finishTimeController.text}',
-      'availableSeats': availableSeatsController.text,
-      'totalSeats': availableSeatsController.text,
-      'car': carController.text,
-      'price': priceController.text,
-      'comments': commentsController.text,
-      'driver': 'your', // Отмечаем, что поездка принадлежит пользователю
-    };
-
-    ref.read(activeTripsProvider.notifier).addTrip(newTrip);
-    Navigator.pushReplacementNamed(context, '/profile'); // Возвращаемся на экран профиля
-  }
-}
-
-
-  // Показ ошибки
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
@@ -153,70 +145,128 @@ void _createTrip() {
     return Scaffold(
       appBar: AppBar(
         title: Text("Create a Trip"),
+        backgroundColor: Colors.teal,
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: startPointController,
-              decoration: InputDecoration(labelText: "Start Point"),
+      body: userLocation == null
+          ? Center(child: CircularProgressIndicator()) // Show loader until user location is fetched
+          : SingleChildScrollView( // Make the screen scrollable to avoid overflow
+              child: Column(
+                children: [
+                  // Map for selecting pickup and destination
+                  SizedBox(
+                    height: 400,
+                    child: MapboxMap(
+                      accessToken: 'pk.eyJ1IjoibGVsb25vdjIzIiwiYSI6ImNtMWlqc2YxbTBtb3EyanMyMDFyYXU2bGMifQ.tk-A8ed40Avnbu_-NXM69g',
+                      onMapCreated: (controller) => mapController = controller,
+                      onMapClick: (point, coordinates) => _onMapTapped(coordinates),
+                      initialCameraPosition: CameraPosition(
+                        target: userLocation!,
+                        zoom: 14.0,
+                      ),
+                      myLocationEnabled: true,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Display pickup point
+                        if (startPoint != null) ...[
+                          Row(
+                            children: [
+                              Icon(Icons.location_on, color: Colors.green),
+                              SizedBox(width: 10),
+                              Text(
+                                "Pickup Point: ${startPoint!.latitude}, ${startPoint!.longitude}",
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ],
+                        // Display destination point
+                        if (destinationPoint != null) ...[
+                          SizedBox(height: 10),
+                          Row(
+                            children: [
+                              Icon(Icons.flag, color: Colors.red),
+                              SizedBox(width: 10),
+                              Text(
+                                "Destination Point: ${destinationPoint!.latitude}, ${destinationPoint!.longitude}",
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ],
+                        SizedBox(height: 20),
+                        // Form for trip details
+                        Card(
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                TextField(
+                                  controller: availableSeatsController,
+                                  decoration: InputDecoration(
+                                    labelText: "Available Seats",
+                                    border: OutlineInputBorder(),
+                                  ),
+                                  keyboardType: TextInputType.number,
+                                ),
+                                SizedBox(height: 10),
+                                TextField(
+                                  controller: carController,
+                                  decoration: InputDecoration(
+                                    labelText: "Car",
+                                    border: OutlineInputBorder(),
+                                  ),
+                                ),
+                                SizedBox(height: 10),
+                                TextField(
+                                  controller: priceController,
+                                  decoration: InputDecoration(
+                                    labelText: "Price per Passenger",
+                                    border: OutlineInputBorder(),
+                                  ),
+                                  keyboardType: TextInputType.number,
+                                ),
+                                SizedBox(height: 10),
+                                TextField(
+                                  controller: commentsController,
+                                  decoration: InputDecoration(
+                                    labelText: "Comments",
+                                    border: OutlineInputBorder(),
+                                  ),
+                                  maxLines: 3,
+                                ),
+                                SizedBox(height: 20),
+                                Center(
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.teal,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                    ),
+                                    onPressed: _createTrip,
+                                    child: Text("Create Trip"),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-            TextField(
-              controller: destinationController,
-              decoration: InputDecoration(labelText: "Destination"),
-            ),
-            TextField(
-              controller: startDateController,
-              readOnly: true,
-              decoration: InputDecoration(labelText: "Start Date"),
-              onTap: () => _selectDate(context, startDateController),
-            ),
-            TextField(
-              controller: startTimeController,
-              readOnly: true,
-              decoration: InputDecoration(labelText: "Start Time"),
-              onTap: () => _selectTime(context, startTimeController),
-            ),
-            TextField(
-              controller: finishDateController,
-              readOnly: true,
-              decoration: InputDecoration(labelText: "Finish Date"),
-              onTap: () => _selectDate(context, finishDateController),
-            ),
-            TextField(
-              controller: finishTimeController,
-              readOnly: true,
-              decoration: InputDecoration(labelText: "Finish Time"),
-              onTap: () => _selectTime(context, finishTimeController),
-            ),
-            TextField(
-              controller: availableSeatsController,
-              decoration: InputDecoration(labelText: "Available Seats"),
-              keyboardType: TextInputType.number,
-            ),
-            TextField(
-              controller: carController,
-              decoration: InputDecoration(labelText: "Car"),
-            ),
-            TextField(
-              controller: priceController,
-              decoration: InputDecoration(labelText: "Price per Passenger"),
-              keyboardType: TextInputType.number,
-            ),
-            TextField(
-              controller: commentsController,
-              decoration: InputDecoration(labelText: "Comments"),
-              maxLines: 3,
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _createTrip,
-              child: Text("Create Trip"),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
