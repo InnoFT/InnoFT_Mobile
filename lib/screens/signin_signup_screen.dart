@@ -1,4 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:inno_ft/services/auth_service.dart';
 import 'profile_screen.dart';
@@ -192,12 +196,6 @@ class SignInSignUpScreen extends StatelessWidget {
                   },
                   child: const Text('Enter', style: TextStyle(color: Colors.green)),
                 ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text('Cancel', style: TextStyle(color: Colors.red)),
-                ),
               ],
             );
           },
@@ -208,35 +206,44 @@ class SignInSignUpScreen extends StatelessWidget {
 
   // Sign-up Dialog
   void _showSignUpDialog(BuildContext context) {
-    TextEditingController emailController = TextEditingController();
-    TextEditingController passwordController = TextEditingController();
-    TextEditingController confirmPasswordController = TextEditingController();
-    TextEditingController nameController = TextEditingController();
-    TextEditingController phoneController = TextEditingController();
-    bool rememberMe = false;
-    bool isDriver = false;
-    String role = "Fellow Traveller";
+  TextEditingController emailController = TextEditingController();
+  TextEditingController passwordController = TextEditingController();
+  TextEditingController confirmPasswordController = TextEditingController();
+  TextEditingController nameController = TextEditingController();
+  TextEditingController phoneController = TextEditingController();
+  
+  // Driver-specific controllers
+  TextEditingController licensePlateController = TextEditingController();
+  TextEditingController brandController = TextEditingController();
+  TextEditingController modelController = TextEditingController();
+  TextEditingController seatsAvailableController = TextEditingController();
+  
+  bool rememberMe = false;
+  bool isDriver = false;
+  String role = "Fellow Traveller";
+  File? carPhoto;
 
-    showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+  showDialog(
+    context: context,
+    builder: (context) {
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            backgroundColor: Colors.blue.shade50.withOpacity(0.9),
+            title: Text(
+              'Sign Up',
+              style: TextStyle(
+                color: Colors.blue.shade900,
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
               ),
-              backgroundColor: Colors.blue.shade50.withOpacity(0.9),
-              title: Text(
-                'Sign Up',
-                style: TextStyle(
-                  color: Colors.blue.shade900,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 24,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              content: Column(
+              textAlign: TextAlign.center,
+            ),
+            content: SingleChildScrollView(
+              child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
@@ -343,7 +350,9 @@ class SignInSignUpScreen extends StatelessWidget {
                       Text(
                         "Passenger",
                         style: TextStyle(
-                            color: Colors.blue.shade900, fontSize: 16),
+                          color: Colors.blue.shade900,
+                          fontSize: 16,
+                        ),
                       ),
                       Switch(
                         activeColor: Colors.blue.shade700,
@@ -358,13 +367,108 @@ class SignInSignUpScreen extends StatelessWidget {
                       Text(
                         "Driver",
                         style: TextStyle(
-                            color: Colors.blue.shade900, fontSize: 16),
+                          color: Colors.blue.shade900,
+                          fontSize: 16,
+                        ),
                       ),
                     ],
                   ),
+                  if (isDriver) ...[
+                    const SizedBox(height: 15),
+                    TextField(
+                      controller: licensePlateController,
+                      decoration: InputDecoration(
+                        labelText: 'License Plate',
+                        labelStyle: TextStyle(
+                          color: Colors.blue.shade900,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        enabledBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Colors.blue.shade700),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    TextField(
+                      controller: brandController,
+                      decoration: InputDecoration(
+                        labelText: 'Brand',
+                        labelStyle: TextStyle(
+                          color: Colors.blue.shade900,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        enabledBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Colors.blue.shade700),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    TextField(
+                      controller: modelController,
+                      decoration: InputDecoration(
+                        labelText: 'Model',
+                        labelStyle: TextStyle(
+                          color: Colors.blue.shade900,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        enabledBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Colors.blue.shade700),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    TextField(
+                      controller: seatsAvailableController,
+                      decoration: InputDecoration(
+                        labelText: 'Seats Available',
+                        labelStyle: TextStyle(
+                          color: Colors.blue.shade900,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        enabledBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Colors.blue.shade700),
+                        ),
+                      ),
+                      keyboardType: TextInputType.number,
+                    ),
+                    const SizedBox(height: 15),
+                    GestureDetector(
+                      onTap: () async {
+                        final pickedFile = await ImagePicker().pickImage(
+                          source: ImageSource.gallery,
+                        );
+                        if (pickedFile != null) {
+                          setState(() {
+                            carPhoto = File(pickedFile.path);
+                          });
+                        }
+                      },
+                      child: Container(
+                        color: Colors.blue.shade100,
+                        height: 50,
+                        width: double.infinity,
+                        child: Center(
+                          child: Text(
+                            carPhoto == null
+                                ? 'Select Car Photo'
+                                : 'Car Photo Selected',
+                            style: TextStyle(
+                              color: Colors.blue.shade900,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
-              actions: [
+            ),
+            actions: [
                 TextButton(
                   onPressed: () {
                     Navigator.pop(context);
@@ -378,10 +482,6 @@ class SignInSignUpScreen extends StatelessWidget {
                     String phone = phoneController.text;
                     String password = passwordController.text;
                     String confirmPassword = confirmPasswordController.text;
-
-                    if (isDriver) {
-                      role = "Driver";
-                    }
 
                     if (name.isEmpty) {
                       _showErrorDialog(context, 'Name cannot be empty.');
@@ -403,6 +503,33 @@ class SignInSignUpScreen extends StatelessWidget {
                       _showErrorDialog(context, 'Passwords do not match.');
                     } else {
                       try {
+                        String? licensePlate;
+                        String? brand;
+                        String? model;
+                        int? seatsAvailable;
+
+                        if (isDriver) {
+                          licensePlate = licensePlateController.text;
+                          brand = brandController.text;
+                          model = modelController.text;
+                          seatsAvailable = int.tryParse(
+                              seatsAvailableController.text);
+
+                          if (licensePlate.isEmpty ||
+                              brand.isEmpty ||
+                              model.isEmpty ||
+                              seatsAvailable == null) {
+                            _showErrorDialog(
+                                context, 'Please fill out all driver details.');
+                            return;
+                          }
+                          if (carPhoto == null) {
+                            _showErrorDialog(
+                                context, 'Please select a car photo.');
+                            return;
+                          }
+                        }
+
                         await _authController.register(
                           name,
                           email,
@@ -410,6 +537,43 @@ class SignInSignUpScreen extends StatelessWidget {
                           password,
                           role,
                         );
+
+                        SharedPreferences prefs = await SharedPreferences.getInstance();
+                        String? authToken = prefs.getString("Authorization");
+
+                        if (authToken == null) {
+                          _showErrorDialog(
+                              context, 'Authentication token not found.');
+                          return;
+                        }
+
+                        if (isDriver) {
+                          var uri = Uri.parse(
+                              'http://localhost:8069/vehicle/attach');
+
+                          var request = http.MultipartRequest('POST', uri);
+                          request.headers['Authorization'] = authToken;
+
+                          request.fields['license_plate'] = licensePlate!;
+                          request.fields['brand'] = brand!;
+                          request.fields['model'] = model!;
+                          request.fields['seats_available'] =
+                              seatsAvailable.toString();
+                          
+                          var response = await request.send();
+                          
+                          if (response.statusCode == 201 || response.statusCode == 200) {
+                            var responseBody =
+                                await response.stream.bytesToString();
+                            print('Vehicle attached: $responseBody');
+                          } else {
+                            var responseBody =
+                                await response.stream.bytesToString();
+                            _showErrorDialog(context,
+                                'Failed to attach vehicle: $responseBody');
+                            return;
+                          }
+                        }
 
                         if (rememberMe) {
                           SharedPreferences prefs =
@@ -429,29 +593,18 @@ class SignInSignUpScreen extends StatelessWidget {
                       } catch (e) {
                         _showErrorDialog(context, 'Error during sign up: $e');
                       }
-
-                      Navigator.pop(context);
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (_) => const ProfileScreen()),
-                      );
                     }
                   },
                   child: const Text('Enter', style: TextStyle(color: Colors.green)),
                 ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text('Cancel', style: TextStyle(color: Colors.red)),
-                ),
               ],
-            );
-          },
-        );
-      },
-    );
-  }
+          );
+        },
+      );
+    },
+  );
+}
+
 
   // Phone validation
   bool _isPhoneValid(String phone) {
