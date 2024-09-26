@@ -27,6 +27,8 @@ dev_dependencies:
   flutter_lints: ^4.0.0
 
 flutter:
+  assets:
+    - assets/base_profile_picture.jpeg
   uses-material-design: true
   assets:
     - assets/background.png
