@@ -1,40 +1,45 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:inno_ft/services/auth_service.dart';
+import '../components/theme_provider.dart';
 import 'profile_screen.dart';
 import 'package:http/http.dart' as http;
 import '../components/theme_toggle_switch.dart'; // Import your ThemeToggleSwitch component
 
-class SignInSignUpScreen extends StatelessWidget {
+class SignInSignUpScreen extends ConsumerWidget {
   final AuthController _authController = AuthController();
 
   SignInSignUpScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDarkTheme = ref.watch(themeNotifierProvider);
     return Scaffold(
       body: Stack(
         children: [
-          // Background image
+          // Background image (Handle light/dark theme for background)
           Positioned.fill(
             child: Image.asset(
               'assets/background.png',
               fit: BoxFit.cover,
+              color: isDarkTheme ? Colors.black.withOpacity(0.5) : null, // Dark overlay in dark mode
+              colorBlendMode: isDarkTheme ? BlendMode.darken : null,
             ),
           ),
           Positioned.fill(
             child: Container(
-              color: Colors.black.withOpacity(0.3),
+              color: isDarkTheme ? Colors.black.withOpacity(0.7) : Colors.black.withOpacity(0.3),
             ),
           ),
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text(
+                Text(
                   "InnoFellowTravelers",
                   style: TextStyle(
-                    color: Colors.white,
+                    color: isDarkTheme ? Colors.white70 : Colors.white, // Adjust color based on theme
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                   ),
@@ -42,7 +47,7 @@ class SignInSignUpScreen extends StatelessWidget {
                 const SizedBox(height: 40),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue.shade700.withOpacity(0.9),
+                    backgroundColor: isDarkTheme ? Colors.blueGrey.shade700 : Colors.blue.shade700.withOpacity(0.9),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
                     shape: RoundedRectangleBorder(
@@ -57,7 +62,7 @@ class SignInSignUpScreen extends StatelessWidget {
                 const SizedBox(height: 20),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue.shade900.withOpacity(0.9),
+                    backgroundColor: isDarkTheme ? Colors.blueGrey.shade900 : Colors.blue.shade900.withOpacity(0.9),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
                     shape: RoundedRectangleBorder(
@@ -85,8 +90,8 @@ class SignInSignUpScreen extends StatelessWidget {
     );
   }
 
-
   void _showSignInDialog(BuildContext context) {
+    final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
     TextEditingController emailController = TextEditingController();
     TextEditingController passwordController = TextEditingController();
     bool rememberMe = false;
@@ -100,11 +105,11 @@ class SignInSignUpScreen extends StatelessWidget {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
-              backgroundColor: Colors.blue.shade50.withOpacity(0.9),
+              backgroundColor: isDarkTheme ? Colors.blueGrey.shade900.withOpacity(0.9) : Colors.blue.shade50.withOpacity(0.9),
               title: Text(
                 'Sign In',
                 style: TextStyle(
-                  color: Colors.blue.shade900,
+                  color: isDarkTheme ? Colors.white70 : Colors.blue.shade900,
                   fontWeight: FontWeight.bold,
                   fontSize: 24,
                 ),
@@ -115,16 +120,17 @@ class SignInSignUpScreen extends StatelessWidget {
                 children: [
                   TextField(
                     controller: emailController,
+                    style: TextStyle(color: isDarkTheme ? Colors.white70 : Colors.black),
                     decoration: InputDecoration(
                       labelText: 'Email',
                       labelStyle: TextStyle(
-                        color: Colors.blue.shade900,
+                        color: isDarkTheme ? Colors.white70 : Colors.blue.shade900,
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
                       enabledBorder: UnderlineInputBorder(
                         borderSide: BorderSide(
-                          color: Colors.blue.shade700,
+                          color: isDarkTheme ? Colors.white70 : Colors.blue.shade700,
                         ),
                       ),
                     ),
@@ -132,15 +138,16 @@ class SignInSignUpScreen extends StatelessWidget {
                   const SizedBox(height: 15),
                   TextField(
                     controller: passwordController,
+                    style: TextStyle(color: isDarkTheme ? Colors.white70 : Colors.black),
                     decoration: InputDecoration(
                       labelText: 'Password',
                       labelStyle: TextStyle(
-                        color: Colors.blue.shade900,
+                        color: isDarkTheme ? Colors.white70 : Colors.blue.shade900,
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
                       enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.blue.shade700),
+                        borderSide: BorderSide(color: isDarkTheme ? Colors.white70 : Colors.blue.shade700),
                       ),
                     ),
                     obscureText: true,
@@ -150,7 +157,7 @@ class SignInSignUpScreen extends StatelessWidget {
                     children: [
                       Checkbox(
                         value: rememberMe,
-                        activeColor: Colors.blue.shade700,
+                        activeColor: isDarkTheme ? Colors.white70 : Colors.blue.shade700,
                         onChanged: (value) {
                           setState(() {
                             rememberMe = value!;
@@ -160,7 +167,7 @@ class SignInSignUpScreen extends StatelessWidget {
                       Text(
                         "Remember me",
                         style: TextStyle(
-                          color: Colors.blue.shade900,
+                          color: isDarkTheme ? Colors.white70 : Colors.blue.shade900,
                           fontSize: 16,
                         ),
                       ),
@@ -184,12 +191,10 @@ class SignInSignUpScreen extends StatelessWidget {
                       );
 
                       if (rememberMe) {
-                        SharedPreferences prefs =
-                            await SharedPreferences.getInstance();
+                        SharedPreferences prefs = await SharedPreferences.getInstance();
                         await prefs.setBool('rememberMe', true);
                         await prefs.setString('email', emailController.text);
-                        await prefs.setString(
-                            'password', passwordController.text);
+                        await prefs.setString('password', passwordController.text);
                       }
 
                       Navigator.pop(context);
@@ -203,12 +208,6 @@ class SignInSignUpScreen extends StatelessWidget {
                   },
                   child: const Text('Enter', style: TextStyle(color: Colors.green)),
                 ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text('Cancel', style: TextStyle(color: Colors.red)),
-                ),
               ],
             );
           },
@@ -219,6 +218,7 @@ class SignInSignUpScreen extends StatelessWidget {
 
   // Sign-up Dialog
   void _showSignUpDialog(BuildContext context) {
+    final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
     TextEditingController emailController = TextEditingController();
     TextEditingController passwordController = TextEditingController();
     TextEditingController confirmPasswordController = TextEditingController();
@@ -237,11 +237,11 @@ class SignInSignUpScreen extends StatelessWidget {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
-              backgroundColor: Colors.blue.shade50.withOpacity(0.9),
+              backgroundColor: isDarkTheme ? Colors.blueGrey.shade900.withOpacity(0.9) : Colors.blue.shade50.withOpacity(0.9),
               title: Text(
                 'Sign Up',
                 style: TextStyle(
-                  color: Colors.blue.shade900,
+                  color: isDarkTheme ? Colors.white70 : Colors.blue.shade900,
                   fontWeight: FontWeight.bold,
                   fontSize: 24,
                 ),
@@ -252,45 +252,48 @@ class SignInSignUpScreen extends StatelessWidget {
                 children: [
                   TextField(
                     controller: nameController,
+                    style: TextStyle(color: isDarkTheme ? Colors.white70 : Colors.black),
                     decoration: InputDecoration(
                       labelText: 'Name',
                       labelStyle: TextStyle(
-                        color: Colors.blue.shade900,
+                        color: isDarkTheme ? Colors.white70 : Colors.blue.shade900,
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
                       enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.blue.shade700),
+                        borderSide: BorderSide(color: isDarkTheme ? Colors.white70 : Colors.blue.shade700),
                       ),
                     ),
                   ),
                   const SizedBox(height: 15),
                   TextField(
                     controller: emailController,
+                    style: TextStyle(color: isDarkTheme ? Colors.white70 : Colors.black),
                     decoration: InputDecoration(
                       labelText: 'Email',
                       labelStyle: TextStyle(
-                        color: Colors.blue.shade900,
+                        color: isDarkTheme ? Colors.white70 : Colors.blue.shade900,
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
                       enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.blue.shade700),
+                        borderSide: BorderSide(color: isDarkTheme ? Colors.white70 : Colors.blue.shade700),
                       ),
                     ),
                   ),
                   const SizedBox(height: 15),
                   TextField(
                     controller: phoneController,
+                    style: TextStyle(color: isDarkTheme ? Colors.white70 : Colors.black),
                     decoration: InputDecoration(
                       labelText: 'Phone Number',
                       labelStyle: TextStyle(
-                        color: Colors.blue.shade900,
+                        color: isDarkTheme ? Colors.white70 : Colors.blue.shade900,
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
                       enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.blue.shade700),
+                        borderSide: BorderSide(color: isDarkTheme ? Colors.white70 : Colors.blue.shade700),
                       ),
                     ),
                     keyboardType: TextInputType.phone,
@@ -298,15 +301,16 @@ class SignInSignUpScreen extends StatelessWidget {
                   const SizedBox(height: 15),
                   TextField(
                     controller: passwordController,
+                    style: TextStyle(color: isDarkTheme ? Colors.white70 : Colors.black),
                     decoration: InputDecoration(
                       labelText: 'Password',
                       labelStyle: TextStyle(
-                        color: Colors.blue.shade900,
+                        color: isDarkTheme ? Colors.white70 : Colors.blue.shade900,
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
                       enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.blue.shade700),
+                        borderSide: BorderSide(color: isDarkTheme ? Colors.white70 : Colors.blue.shade700),
                       ),
                     ),
                     obscureText: true,
@@ -314,15 +318,16 @@ class SignInSignUpScreen extends StatelessWidget {
                   const SizedBox(height: 15),
                   TextField(
                     controller: confirmPasswordController,
+                    style: TextStyle(color: isDarkTheme ? Colors.white70 : Colors.black),
                     decoration: InputDecoration(
                       labelText: 'Confirm Password',
                       labelStyle: TextStyle(
-                        color: Colors.blue.shade900,
+                        color: isDarkTheme ? Colors.white70 : Colors.blue.shade900,
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
                       enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.blue.shade700),
+                        borderSide: BorderSide(color: isDarkTheme ? Colors.white70 : Colors.blue.shade700),
                       ),
                     ),
                     obscureText: true,
@@ -332,7 +337,7 @@ class SignInSignUpScreen extends StatelessWidget {
                     children: [
                       Checkbox(
                         value: rememberMe,
-                        activeColor: Colors.blue.shade700,
+                        activeColor: isDarkTheme ? Colors.white70 : Colors.blue.shade700,
                         onChanged: (value) {
                           setState(() {
                             rememberMe = value!;
@@ -342,7 +347,7 @@ class SignInSignUpScreen extends StatelessWidget {
                       Text(
                         "Remember me",
                         style: TextStyle(
-                          color: Colors.blue.shade900,
+                          color: isDarkTheme ? Colors.white70 : Colors.blue.shade900,
                           fontSize: 16,
                         ),
                       ),
@@ -354,10 +359,10 @@ class SignInSignUpScreen extends StatelessWidget {
                       Text(
                         "Passenger",
                         style: TextStyle(
-                            color: Colors.blue.shade900, fontSize: 16),
+                            color: isDarkTheme ? Colors.white70 : Colors.blue.shade900, fontSize: 16),
                       ),
                       Switch(
-                        activeColor: Colors.blue.shade700,
+                        activeColor: isDarkTheme ? Colors.white70 : Colors.blue.shade700,
                         value: isDriver,
                         onChanged: (value) {
                           setState(() {
@@ -369,7 +374,7 @@ class SignInSignUpScreen extends StatelessWidget {
                       Text(
                         "Driver",
                         style: TextStyle(
-                            color: Colors.blue.shade900, fontSize: 16),
+                            color: isDarkTheme ? Colors.white70 : Colors.blue.shade900, fontSize: 16),
                       ),
                     ],
                   ),
@@ -402,8 +407,7 @@ class SignInSignUpScreen extends StatelessWidget {
                       _showErrorDialog(context,
                           'Email must contain "@" and a domain (e.g. @gmail.com).');
                     } else if (phone.isEmpty) {
-                      _showErrorDialog(
-                          context, 'Phone number cannot be empty.');
+                      _showErrorDialog(context, 'Phone number cannot be empty.');
                     } else if (!_isPhoneValid(phone)) {
                       _showErrorDialog(context,
                           'Phone number must start with +7 or 8 and contain 11 digits.');
@@ -450,12 +454,6 @@ class SignInSignUpScreen extends StatelessWidget {
                   },
                   child: const Text('Enter', style: TextStyle(color: Colors.green)),
                 ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text('Cancel', style: TextStyle(color: Colors.red)),
-                ),
               ],
             );
           },
@@ -490,12 +488,16 @@ class SignInSignUpScreen extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          backgroundColor: Colors.blue.shade50.withOpacity(0.9),
+          backgroundColor: Theme.of(context).brightness == Brightness.dark
+              ? Colors.blueGrey.shade900.withOpacity(0.9)
+              : Colors.blue.shade50.withOpacity(0.9),
           title: Center(
             child: Text(
               'Error',
               style: TextStyle(
-                color: Colors.blue.shade900,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white70
+                    : Colors.blue.shade900,
                 fontWeight: FontWeight.bold,
                 fontSize: 20,
               ),
@@ -504,7 +506,9 @@ class SignInSignUpScreen extends StatelessWidget {
           content: Text(
             message,
             style: TextStyle(
-              color: Colors.blue.shade700,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white70
+                  : Colors.blue.shade700,
               fontSize: 16,
             ),
             textAlign: TextAlign.center,
