@@ -4,9 +4,12 @@ import (
 	"FlutterBackend/initializers"
 	"FlutterBackend/models"
 	"FlutterBackend/services"
-	"github.com/gin-gonic/gin"
 	"net/http"
+	"net/url"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 /* Driver */
@@ -64,6 +67,7 @@ func CreateTrip(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&input); err != nil {
+		logrus.Warn("ERROR BINDING: %s", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -107,8 +111,11 @@ func CreateTrip(c *gin.Context) {
 /* Fellow Traveller */
 
 func SearchTrips(c *gin.Context) {
-	startCity := c.Query("start_city")
-	endCity := c.Query("end_city")
+	startCityEncoded := c.Query("start_city")
+	endCityEncoded := c.Query("end_city")
+
+	startCity, _ := url.QueryUnescape(startCityEncoded)
+	endCity, _ := url.QueryUnescape(endCityEncoded)
 
 	if startCity == "" || endCity == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Start city and end city are required"})
@@ -116,15 +123,13 @@ func SearchTrips(c *gin.Context) {
 	}
 
 	var trips []models.Trip
-	query := initializers.DB.Joins("StartLocation").Joins("EndLocation").
-		Where("StartLocation.city = ? AND EndLocation.city = ?", startCity, endCity).
+	query := initializers.DB.Model(&models.Trip{}).
+		Joins("JOIN locations AS start_location ON trips.start_location_id = start_location.location_id").
+		Joins("JOIN locations AS end_location ON trips.end_location_id = end_location.location_id").
+		Where("start_location.city = ? AND end_location.city = ?", startCity, endCity).
 		Preload("Driver").
 		Preload("StartLocation").
 		Preload("EndLocation")
-
-	if availableSeats := c.Query("available_seats"); availableSeats != "" {
-		query = query.Where("available_seats >= ?", availableSeats)
-	}
 
 	if err := query.Find(&trips).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to search trips"})

@@ -6,12 +6,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"net/http"
 	"os"
+
+	"github.com/sirupsen/logrus"
 )
 
-func FindOrCreateLocation(latitude, longitude float64) (models.Location, error) {
+func FindOrCreateLocation(latitude float64, longitude float64) (models.Location, error) {
 	var location models.Location
 
 	err := initializers.DB.Where("latitude = ? AND longitude = ?", latitude, longitude).First(&location).Error
@@ -41,7 +42,7 @@ func FindOrCreateLocation(latitude, longitude float64) (models.Location, error) 
 func getCityAndAddressFromYandex(latitude, longitude float64) (string, string, error) {
 	var yandexAPIKey = os.Getenv("YANDEX_API_KEY")
 	var yandexAPIURL = "https://geocode-maps.yandex.ru/1.x/?apikey=" + yandexAPIKey + "&format=json&geocode="
-	url := fmt.Sprintf("%s%f,%f", yandexAPIURL, longitude, latitude)
+	url := fmt.Sprintf("%s%f,%f&lang=en_US", yandexAPIURL, longitude, latitude)
 
 	resp, err := http.Get(url)
 	if err != nil {
