@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'profile_screen.dart';
 import 'package:http/http.dart' as http;
+import '../components/theme_toggle_switch.dart'; // Import your ThemeToggleSwitch component
 
 class SignInSignUpScreen extends StatelessWidget {
   @override
@@ -68,10 +69,20 @@ class SignInSignUpScreen extends StatelessWidget {
               ],
             ),
           ),
+          // Wrap the ThemeToggleSwitch with SafeArea and Position it
+          SafeArea(
+            child: Positioned(
+              bottom: 20,
+              left: 20,
+              child: ThemeToggleSwitch(), // Ensure it stays in a visible corner
+            ),
+          ),
         ],
       ),
     );
   }
+
+  // Rest of your functions remain unchanged...
 
   // Sign-in Dialog
   void _showSignInDialog(BuildContext context) {
@@ -175,8 +186,7 @@ class SignInSignUpScreen extends StatelessWidget {
                             await SharedPreferences.getInstance();
                         await prefs.setString('email', email);
                         await prefs.setString('password', password);
-                        await prefs.setBool(
-                            'isLoggedIn', true); // Save login status
+                        await prefs.setBool('isLoggedIn', true); // Save login status
                       }
 
                       Navigator.pop(context); // Close dialog
@@ -427,16 +437,16 @@ class SignInSignUpScreen extends StatelessWidget {
     );
   }
 
-  // Phone validation
-  bool _isPhoneValid(String phone) {
-    final RegExp phoneRegex = RegExp(r'^(\+7|8)\d{10}$');
-    return phoneRegex.hasMatch(phone);
-  }
-
   // Email validation
   bool _isEmailValid(String email) {
     final RegExp emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
     return emailRegex.hasMatch(email);
+  }
+
+  // Phone validation
+  bool _isPhoneValid(String phone) {
+    final RegExp phoneRegex = RegExp(r'^(\+7|8)\d{10}$');
+    return phoneRegex.hasMatch(phone);
   }
 
   // Password validation

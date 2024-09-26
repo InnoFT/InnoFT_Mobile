@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import '../components/theme_toggle_switch.dart';
 import '../components/trip_provider.dart'; // Импортируем провайдер для активных поездок и истории поездок
-import '../screens/settings_screen.dart';
 import '../screens/create_trip_screen.dart';
-import '../screens/find_trip_screen.dart';
+import '../screens/find_trip_screen.dart';// Import the ThemeToggleSwitch
 
 class ProfileScreen extends ConsumerStatefulWidget {
   @override
@@ -22,16 +22,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _loadUserData(); // Загружаем данные пользователя при входе
+    _loadUserData(); // Load user data on initialization
   }
 
-  // Метод для загрузки данных пользователя
   Future<void> _loadUserData() async {
     setState(() {
-      userName = "John Doe"; // Заглушка для имени
-      userEmail = "john.doe@example.com"; // Заглушка для email
-      userPhone = "+71234567890"; // Заглушка для телефона
-      userRating = 4.7; // Заглушка для рейтинга
+      userName = "John Doe";
+      userEmail = "john.doe@example.com";
+      userPhone = "+71234567890";
+      userRating = 4.7;
     });
   }
 
@@ -47,47 +46,44 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final activeTrips = ref
-        .watch(activeTripsProvider); // Получаем активные поездки из провайдера
-    final tripHistory = ref
-        .watch(tripHistoryProvider); // Получаем историю поездок из провайдера
+    final activeTrips = ref.watch(activeTripsProvider);
+    final tripHistory = ref.watch(tripHistoryProvider);
 
     return DefaultTabController(
-      length: 4,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           title: Text('Profile Screen'),
           bottom: TabBar(
             tabs: [
-              Tab(text: 'Settings', icon: Icon(Icons.settings)),
               Tab(text: 'Profile', icon: Icon(Icons.person)),
               Tab(text: 'Create Trip', icon: Icon(Icons.add_circle)),
               Tab(text: 'Find Trip', icon: Icon(Icons.search)),
             ],
           ),
         ),
-        body: TabBarView(
+        body: Stack(
           children: [
-            SettingsScreen(),
-            _buildProfileContent(context, activeTrips,
-                tripHistory), // Передаем активные поездки и историю в профиль
-            CreateTripScreen(),
-            FindTripScreen(),
+            TabBarView(
+              children: [
+                _buildProfileContent(context, activeTrips, tripHistory),
+                CreateTripScreen(),
+                FindTripScreen(),
+              ],
+            ),
+            ThemeToggleSwitch(),
           ],
         ),
       ),
     );
   }
 
-  // Основное содержимое профиля
-  Widget _buildProfileContent(BuildContext context,
-      List<Map<String, String>> activeTrips, List<String> tripHistory) {
+  Widget _buildProfileContent(BuildContext context, List<Map<String, String>> activeTrips, List<String> tripHistory) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Фото пользователя
           Center(
             child: Column(
               children: [
@@ -105,8 +101,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
           ),
           SizedBox(height: 20),
-
-          // Имя пользователя, email и номер телефона
           _buildUserInfo('Name', userName, () {
             _showEditDialog(context, 'name', userName);
           }),
@@ -116,17 +110,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           _buildUserInfo('Phone', userPhone, () {
             _showEditDialog(context, 'phone', userPhone);
           }),
-
           SizedBox(height: 20),
-
-          // Рейтинг пользователя
           Text(
             'Rating: $userRating',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 20),
-
-          // Активные поездки из провайдера
           Text(
             'Active Trips:',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -135,18 +124,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             Text('No active trips available.')
           else
             ListView.builder(
-              shrinkWrap:
-                  true, // Чтобы ListView корректно работал внутри ScrollView
+              shrinkWrap: true,
               itemCount: activeTrips.length,
               itemBuilder: (context, index) {
                 final trip = activeTrips[index];
-                return _buildTripItem(trip); // Отображаем каждую поездку
+                return _buildTripItem(trip);
               },
             ),
-
           SizedBox(height: 20),
-
-          // История поездок с кнопкой "очистить"
           Text(
             'Trip History:',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -155,8 +140,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             Text('No trip history available.')
           else
             ListView.builder(
-              shrinkWrap:
-                  true, // Чтобы ListView корректно работал внутри ScrollView
+              shrinkWrap: true,
               itemCount: tripHistory.length,
               itemBuilder: (context, index) {
                 return ListTile(
@@ -165,8 +149,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               },
             ),
           ElevatedButton(
-            onPressed:
-                _showClearHistoryDialog, // Вызов диалога для очистки истории
+            onPressed: _showClearHistoryDialog,
             child: Text('Clear History'),
           ),
         ],
@@ -174,7 +157,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  // Виджет для активных поездок с возможностью завершить поездку
   Widget _buildTripItem(Map<String, String> trip) {
     return ListTile(
       title: Text('From ${trip['from']} to ${trip['to']}'),
@@ -185,6 +167,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       onTap: () => _showTripDetailsDialog(trip),
     );
   }
+
+  Widget _buildUserInfo(String label, String value, VoidCallback onPressed) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text('$label: $value', style: TextStyle(fontSize: 16)),
+          IconButton(icon: Icon(Icons.edit), onPressed: onPressed),
+        ],
+      ),
+    );
+  }
+
 
   // Диалог с деталями поездки и кнопкой Finish для ваших поездок
   void _showTripDetailsDialog(Map<String, String> trip) {
@@ -237,26 +233,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ],
         );
       },
-    );
-  }
-
-  // Виджет для отображения информации пользователя
-  Widget _buildUserInfo(String label, String value, VoidCallback onPressed) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            '$label: $value',
-            style: TextStyle(fontSize: 16),
-          ),
-          IconButton(
-            icon: Icon(Icons.edit),
-            onPressed: onPressed,
-          ),
-        ],
-      ),
     );
   }
 
@@ -388,5 +364,120 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         );
       },
     );
+  }
+  void _showCurrentPasswordDialog(BuildContext context) {
+    TextEditingController currentPasswordController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Enter Current Password'),
+          content: TextField(
+            controller: currentPasswordController,
+            decoration: InputDecoration(labelText: 'Current Password'),
+            obscureText: true,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Закрываем диалог
+              },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                // Проверка пароля (заглушка для серверной проверки)
+                if (_checkCurrentPassword(currentPasswordController.text)) {
+                  Navigator.pop(context); // Закрываем диалог с текущим паролем
+                  _showNewPasswordDialog(context); // Открываем диалог для нового пароля
+                } else {
+                  _showErrorDialog(context, 'Incorrect current password.');
+                }
+              },
+              child: Text('Enter'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  bool _checkCurrentPassword(String currentPassword) {
+    // Здесь будет логика проверки пароля на сервере, пока возвращаем true для демонстрации
+    return currentPassword == "123456"; // Заглушка: текущий пароль - "123456"
+  }
+
+  // Диалог для ввода нового пароля
+  void _showNewPasswordDialog(BuildContext context) {
+    TextEditingController newPasswordController = TextEditingController();
+    TextEditingController confirmPasswordController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Enter New Password'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: newPasswordController,
+                decoration: InputDecoration(labelText: 'New Password'),
+                obscureText: true,
+              ),
+              TextField(
+                controller: confirmPasswordController,
+                decoration: InputDecoration(labelText: 'Confirm Password'),
+                obscureText: true,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Закрываем диалог
+              },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                if (_validateNewPassword(context, newPasswordController.text, confirmPasswordController.text)) {
+                  // Логика для изменения пароля (заглушка)
+                  Navigator.pop(context); // Закрываем диалог
+                }
+              },
+              child: Text('Change'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+  bool _validateNewPassword(BuildContext context, String newPassword, String confirmPassword) {
+    if (newPassword.isEmpty || confirmPassword.isEmpty) {
+      _showErrorDialog(context, 'New password fields cannot be empty.');
+      return false;
+    }
+
+    if (newPassword != confirmPassword) {
+      _showErrorDialog(context, 'Passwords do not match.');
+      return false;
+    }
+
+    if (!_isPasswordValid(newPassword)) {
+      _showErrorDialog(context, 'Password must be at least 8 characters long and include a digit and a special character.');
+      return false;
+    }
+
+    return true;
+  }
+
+  // Проверка формата пароля
+  bool _isPasswordValid(String password) {
+    if (password.length < 8) return false;
+    bool hasDigit = password.contains(RegExp(r'\d'));
+    bool hasSpecialChar = password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
+    return hasDigit && hasSpecialChar;
   }
 }
