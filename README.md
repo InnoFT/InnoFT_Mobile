@@ -15,10 +15,10 @@ Here are some screenshots and GIFs showing the application in action:
 
 | Screenshot 1  | Screenshot 2  | GIF 1  |
 |:-------------:|:-------------:|:------:|
-| ![Screenshot1](path-to-screenshot1) | ![Screenshot2](path-to-screenshot2) | ![GIF1](path-to-gif1) |
+| ![Screenshot1]([https://github.com/user-attachments/assets/ae74c945-e7b2-4ade-9436-0c4bccbe7cef]) | ![Screenshot2](https://github.com/user-attachments/assets/aa0962d6-5d7b-47bc-9589-37aeae26613d) | ![GIF1](path-to-gif1) |
 
-TBI
-
+<img width="1418" alt="Screenshot 2024-09-26 at 5 55 38 PM" src="https://github.com/user-attachments/assets/ae74c945-e7b2-4ade-9436-0c4bccbe7cef">
+<img width="1440" alt="Screenshot 2024-09-26 at 5 56 21 PM" src="https://github.com/user-attachments/assets/aa0962d6-5d7b-47bc-9589-37aeae26613d">
 ## Setup
 
 To set up the project locally, follow these steps:
