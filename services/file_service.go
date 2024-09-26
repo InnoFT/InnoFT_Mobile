@@ -5,12 +5,13 @@ import (
 	"FlutterBackend/models"
 	"FlutterBackend/utils"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 	"mime/multipart"
 	"os"
 	"path/filepath"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 )
 
 func SaveProfilePicture(c *gin.Context, user models.User, file *multipart.FileHeader) (string, error) {

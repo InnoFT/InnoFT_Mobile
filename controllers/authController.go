@@ -5,9 +5,10 @@ import (
 	"FlutterBackend/middleware"
 	"FlutterBackend/models"
 	"FlutterBackend/utils"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"net/http"
 )
 
 func Register(c *gin.Context) {
@@ -16,7 +17,6 @@ func Register(c *gin.Context) {
 		Email    string `json:"email" binding:"required,email"`
 		Phone    string `json:"phone" binding:"required"`
 		Password string `json:"password" binding:"required"`
-		City     string `json:"city" binding:"required"`
 		Role     string `json:"role" binding:"required,oneof='Fellow Traveller' 'Driver'"`
 	}
 
@@ -29,6 +29,16 @@ func Register(c *gin.Context) {
 	tokenCheck, err := c.Cookie("Authorization")
 
 	if err == nil {
+		_, err := utils.ValidateToken(tokenCheck)
+		if err == nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Already logged in"})
+			return
+		}
+	}
+
+	tokenCheck = c.GetHeader("Authorization")
+
+	if tokenCheck != "" {
 		_, err := utils.ValidateToken(tokenCheck)
 		if err == nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Already logged in"})
@@ -58,7 +68,6 @@ func Register(c *gin.Context) {
 		Email:        input.Email,
 		Phone:        input.Phone,
 		PasswordHash: passwordHash,
-		City:         input.City,
 		Role:         models.Role(input.Role),
 	}
 
@@ -92,6 +101,16 @@ func Login(c *gin.Context) {
 		}
 	}
 
+	tokenCheck = c.GetHeader("Authorization")
+
+	if tokenCheck != "" {
+		_, err := utils.ValidateToken(tokenCheck)
+		if err == nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Already logged in"})
+			return
+		}
+	}
+
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -115,6 +134,7 @@ func Login(c *gin.Context) {
 	}
 
 	c.Set("userID", user.UserID)
+
 	c.SetSameSite(http.SameSiteNoneMode)
 	c.SetCookie("Authorization", token, 3600, "/", "", false, true)
 
@@ -122,15 +142,18 @@ func Login(c *gin.Context) {
 		"user_id": user.UserID,
 	}).Info("User logged in successfully")
 
-	c.JSON(http.StatusOK, gin.H{"user": user.Name})
+	c.JSON(http.StatusOK, gin.H{"user": user.Name, "token": token})
 }
 
 func Logout(c *gin.Context) {
 	tokenString, err := c.Cookie("Authorization")
 	if err != nil {
-		logrus.WithError(err).Warn("Failed to retrieve Authorization cookie")
-		c.AbortWithStatus(http.StatusUnauthorized)
-		return
+		tokenString = c.GetHeader("Authorization")
+		if tokenString == "" {
+			logrus.WithError(err).Warn("Failed to retrieve Authorization cookie")
+			c.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
 	}
 
 	middleware.BlocklistToken(tokenString)

@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 func GetUserProfile(c *gin.Context) {
@@ -26,7 +27,6 @@ func GetUserProfile(c *gin.Context) {
 	user.PasswordHash = ""
 
 	if user.ProfilePic != "" {
-		// Assuming the server is running on localhost:8080, change as per deployment URL
 		user.ProfilePicURL = fmt.Sprintf("%s/user/profile/picture", c.Request.Host)
 	}
 
@@ -46,7 +46,8 @@ func UpdateUserProfile(c *gin.Context) {
 		return
 	}
 
-	if err := c.Request.ParseMultipartForm(10 << 20); err != nil {
+	if err := c.Request.ParseMultipartForm(20 << 40); err != nil {
+		logrus.Warn("Failed to parse form data. Error: %s", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse form data"})
 		return
 	}
@@ -55,6 +56,7 @@ func UpdateUserProfile(c *gin.Context) {
 	city := c.PostForm("city")
 
 	if name == "" || city == "" {
+		logrus.Warn("Failed to parse form data. Name and City are required")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Name and City are required"})
 		return
 	}

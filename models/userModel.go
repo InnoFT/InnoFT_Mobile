@@ -20,7 +20,7 @@ type User struct {
 	Role          Role    `gorm:"tnot null"`
 	Rating        float32 `gorm:"default:0.0"`
 	ProfilePic    string  `gorm:"type:text"`
-	City          string  `gorm:"not null"`
+	City          string
 	ProfilePicURL string
 	CreatedAt     time.Time `gorm:"autoCreateTime"`
 	UpdatedAt     time.Time `gorm:"autoUpdateTime"`
