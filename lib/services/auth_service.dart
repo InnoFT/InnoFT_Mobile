@@ -48,6 +48,14 @@ class AuthController {
       final errorMessage = jsonDecode(response.body)['error'];
       throw Exception(errorMessage);
     }
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final token = data['token'];
+      
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString(authTokenKey, token);
+    }
   }
 
   Future<void> logout() async {

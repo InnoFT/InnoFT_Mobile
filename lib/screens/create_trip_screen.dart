@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:inno_ft/screens/signin_signup_screen.dart';
 import 'package:mapbox_gl/mapbox_gl.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CreateTripScreen extends ConsumerStatefulWidget {
   @override
@@ -16,6 +19,7 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
   LatLng? startPoint;
   LatLng? destinationPoint;
   LatLng? userLocation;
+  String? token;
 
   TextEditingController availableSeatsController = TextEditingController();
   TextEditingController carController =
@@ -31,6 +35,22 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
     _determinePosition();
   }
 
+  Future<void> _checkAuthentication() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final authToken = prefs.getString('Authorization');
+
+    if (authToken == null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => SignInSignUpScreen()),
+      );
+    } else {
+      setState(() {
+        token = authToken;
+      });
+    }
+  }
+  
   Future<void> _determinePosition() async {
     try {
       Position position = await Geolocator.getCurrentPosition(
@@ -106,6 +126,7 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
   }
 
   Future<void> _createTrip() async {
+    await _checkAuthentication();
     if (startPoint == null || destinationPoint == null) {
       _showErrorDialog("Please select both pickup and destination points.");
       return;
@@ -114,7 +135,7 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
     String combinedDateTime =
         "${startDateController.text} ${startTimeController.text}";
 
-    final url = Uri.parse('http://localhost:8069/tips/create');
+    final url = Uri.parse('http://localhost:8069/trips/create');
     try {
       final response = await http.post(
         url,
