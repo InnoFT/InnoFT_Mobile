@@ -22,7 +22,7 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
   String? token;
 
   TextEditingController availableSeatsController = TextEditingController();
-  TextEditingController carController = TextEditingController(text: "Reno Logan");
+  TextEditingController carController = TextEditingController();
   TextEditingController priceController = TextEditingController();
   TextEditingController commentsController = TextEditingController();
   TextEditingController startDateController = TextEditingController();
@@ -133,18 +133,18 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
     try {
       final response = await http.post(
         url,
-        headers: {"Content-Type": "application/json"},
+        headers: {"Content-Type": "application/json", "Authorization": token!},
         body: jsonEncode({
-          "total_seats": availableSeatsController.text,
-          "price_per_seat": priceController.text,
+          "total_seats": int.parse(availableSeatsController.text),
+          "price_per_seat": double.parse(priceController.text),
           "start_latitude": startPoint!.latitude,
           "start_longitude": startPoint!.longitude,
           "end_latitude": destinationPoint!.latitude,
           "end_longitude": destinationPoint!.longitude,
-          "start_time": combinedDateTime,
+          "departure_time": combinedDateTime,
         }),
       );
-      if (response.statusCode != 200) {
+      if (response.statusCode != 200 && response.statusCode != 201) {
         _showErrorDialog('Error creating trip: ${response.statusCode}');
       }
     } catch (e) {
