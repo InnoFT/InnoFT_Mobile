@@ -20,7 +20,7 @@ class _SplashScreenState extends State<SplashScreen> {
     bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
 
     // Задержка на 2 секунды для показа лого
-    await Future.delayed(Duration(seconds: 2));
+    await Future.delayed(Duration(seconds: 5));
 
     if (isLoggedIn) {
       // Если пользователь уже залогинен, перенаправляем на экран профиля

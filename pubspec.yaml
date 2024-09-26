@@ -14,6 +14,11 @@ dependencies:
   image_picker: ^0.8.4+8
   http: ^0.13.6
   provider: ^6.1.2
+  intl: ^0.17.0
+  mapbox_gl: ^0.14.0
+  mapbox_gl_web: ^0.14.0
+  geolocator: ^9.0.2
+
 
 
 dev_dependencies:
@@ -25,3 +30,5 @@ flutter:
   assets:
     - assets/base_profile_picture.jpeg
   uses-material-design: true
+  assets:
+    - assets/background.png

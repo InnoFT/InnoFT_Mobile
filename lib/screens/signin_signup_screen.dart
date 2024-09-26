@@ -11,28 +11,68 @@ class SignInSignUpScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Sign In / Sign Up"),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ElevatedButton(
-              onPressed: () {
-                _showSignInDialog(context);
-              },
-              child: const Text("Sign In"),
+      body: Stack(
+        children: [
+          // Background image
+          Positioned.fill(
+            child: Image.asset(
+              'assets/background.png',
+              fit: BoxFit.cover,
             ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                _showSignUpDialog(context);
-              },
-              child: const Text("Sign Up"),
+          ),
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withOpacity(0.3),
             ),
-          ],
-        ),
+          ),
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  "InnoFellowTravelers",
+                  style: TextStyle(
+                    color: Colors.white, // Dark blue color
+                    fontSize: 28, // Font size
+                    fontWeight: FontWeight.bold, // Bold text style
+                  ),
+                ),
+                SizedBox(height: 40),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue.shade700
+                        .withOpacity(0.9), // Dark blue background
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                  onPressed: () {
+                    _showSignInDialog(context);
+                  },
+                  child: Text("Sign In", style: TextStyle(fontSize: 18)),
+                ),
+                SizedBox(height: 20),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue.shade900
+                        .withOpacity(0.9), // Darker blue background
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                  onPressed: () {
+                    _showSignUpDialog(context);
+                  },
+                  child: Text("Sign Up", style: TextStyle(fontSize: 18)),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -48,30 +88,73 @@ class SignInSignUpScreen extends StatelessWidget {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Text('Sign In'),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              backgroundColor: Colors.blue.shade50.withOpacity(0.9),
+              title: Text(
+                'Sign In',
+                style: TextStyle(
+                  color: Colors.blue.shade900,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24,
+                ),
+                textAlign: TextAlign.center,
+              ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
                     controller: emailController,
-                    decoration: const InputDecoration(labelText: 'Email'),
+                    decoration: InputDecoration(
+                      labelText: 'Email',
+                      labelStyle: TextStyle(
+                        color: Colors.blue.shade900,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Colors.blue.shade700,
+                        ),
+                      ),
+                    ),
                   ),
+                  SizedBox(height: 15),
                   TextField(
                     controller: passwordController,
-                    decoration: const InputDecoration(labelText: 'Password'),
+                    decoration: InputDecoration(
+                      labelText: 'Password',
+                      labelStyle: TextStyle(
+                        color: Colors.blue.shade900,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.blue.shade700),
+                      ),
+                    ),
                     obscureText: true,
                   ),
+                  SizedBox(height: 15),
                   Row(
                     children: [
                       Checkbox(
                         value: rememberMe,
+                        activeColor: Colors.blue.shade700,
                         onChanged: (value) {
                           setState(() {
                             rememberMe = value!;
                           });
                         },
                       ),
-                      const Text("Remember me")
+                      Text(
+                        "Remember me",
+                        style: TextStyle(
+                          color: Colors.blue.shade900,
+                          fontSize: 16,
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -95,6 +178,8 @@ class SignInSignUpScreen extends StatelessWidget {
                         SharedPreferences prefs =
                             await SharedPreferences.getInstance();
                         await prefs.setBool('rememberMe', true);
+						await prefs.setString('email', email);
+                        await prefs.setString('password', password);
                       }
 
                       Navigator.pop(context);
@@ -102,11 +187,15 @@ class SignInSignUpScreen extends StatelessWidget {
                         context,
                         MaterialPageRoute(builder: (_) => ProfileScreen()),
                       );
-                    } catch (e) {
-                      _showErrorDialog(context, 'Error during sign in: $e');
                     }
                   },
-                  child: const Text('Enter'),
+                  child: Text('Enter', style: TextStyle(color: Colors.green)),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Text('Cancel', style: TextStyle(color: Colors.red)),
                 ),
               ],
             );
@@ -116,6 +205,7 @@ class SignInSignUpScreen extends StatelessWidget {
     );
   }
 
+  // Sign-up Dialog
   void _showSignUpDialog(BuildContext context) {
     TextEditingController emailController = TextEditingController();
     TextEditingController passwordController = TextEditingController();
@@ -132,51 +222,133 @@ class SignInSignUpScreen extends StatelessWidget {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Text('Sign Up'),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              backgroundColor:
+                  Colors.blue.shade50.withOpacity(0.9), // Light blue background
+              title: Text(
+                'Sign Up',
+                style: TextStyle(
+                  color: Colors.blue.shade900,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24, // Larger title font size
+                ),
+                textAlign: TextAlign.center,
+              ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
                     controller: nameController,
-                    decoration: const InputDecoration(labelText: 'Name'),
+                    decoration: InputDecoration(
+                      labelText: 'Name',
+                      labelStyle: TextStyle(
+                        color: Colors.blue.shade900,
+                        fontSize: 16, // Consistent font size
+                        fontWeight: FontWeight.w600,
+                      ),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(
+                            color: Colors.blue.shade700), // Blue underline
+                      ),
+                    ),
                   ),
+                  SizedBox(height: 15),
                   TextField(
                     controller: emailController,
-                    decoration: const InputDecoration(labelText: 'Email'),
+                    decoration: InputDecoration(
+                      labelText: 'Email',
+                      labelStyle: TextStyle(
+                        color: Colors.blue.shade900,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.blue.shade700),
+                      ),
+                    ),
                   ),
+                  SizedBox(height: 15),
                   TextField(
                     controller: phoneController,
-                    decoration: const InputDecoration(labelText: 'Phone Number'),
+                    decoration: InputDecoration(
+                      labelText: 'Phone Number',
+                      labelStyle: TextStyle(
+                        color: Colors.blue.shade900,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.blue.shade700),
+                      ),
+                    ),
                     keyboardType: TextInputType.phone,
                   ),
+                  SizedBox(height: 15),
                   TextField(
                     controller: passwordController,
-                    decoration: const InputDecoration(labelText: 'Password'),
+                    decoration: InputDecoration(
+                      labelText: 'Password',
+                      labelStyle: TextStyle(
+                        color: Colors.blue.shade900,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.blue.shade700),
+                      ),
+                    ),
                     obscureText: true,
                   ),
+                  SizedBox(height: 15),
                   TextField(
                     controller: confirmPasswordController,
-                    decoration: const InputDecoration(labelText: 'Confirm Password'),
+                    decoration: InputDecoration(
+                      labelText: 'Confirm Password',
+                      labelStyle: TextStyle(
+                        color: Colors.blue.shade900,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.blue.shade700),
+                      ),
+                    ),
                     obscureText: true,
                   ),
+                  SizedBox(height: 15),
                   Row(
                     children: [
                       Checkbox(
                         value: rememberMe,
+                        activeColor: Colors.blue.shade700, // Styled checkbox
                         onChanged: (value) {
                           setState(() {
                             rememberMe = value!;
                           });
                         },
                       ),
-                      const Text("Remember me")
+                      Text(
+                        "Remember me",
+                        style: TextStyle(
+                          color: Colors.blue.shade900,
+                          fontSize: 16, // Consistent font size
+                        ),
+                      ),
                     ],
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text("Passenger"),
+                      Text(
+                        "Passenger",
+                        style: TextStyle(
+                            color: Colors.blue.shade900, fontSize: 16),
+                      ),
                       Switch(
+                        activeColor:
+                            Colors.blue.shade700, // Styled switch color
                         value: isDriver,
                         onChanged: (value) {
                           setState(() {
@@ -185,7 +357,11 @@ class SignInSignUpScreen extends StatelessWidget {
                           });
                         },
                       ),
-                      const Text("Driver"),
+                      Text(
+                        "Driver",
+                        style: TextStyle(
+                            color: Colors.blue.shade900, fontSize: 16),
+                      ),
                     ],
                   ),
                 ],
@@ -205,6 +381,10 @@ class SignInSignUpScreen extends StatelessWidget {
                     String password = passwordController.text;
                     String confirmPassword = confirmPasswordController.text;
 
+                    if (isDriver) {
+                      role = "Driver";
+                    }
+
                     if (name.isEmpty) {
                       _showErrorDialog(context, 'Name cannot be empty.');
                     } else if (email.isEmpty) {
@@ -213,7 +393,11 @@ class SignInSignUpScreen extends StatelessWidget {
                       _showErrorDialog(context,
                           'Email must contain "@" and a domain (e.g. @gmail.com).');
                     } else if (phone.isEmpty) {
-                      _showErrorDialog(context, 'Phone number cannot be empty.');
+                      _showErrorDialog(
+                          context, 'Phone number cannot be empty.');
+                    } else if (!_isPhoneValid(phone)) {
+                      _showErrorDialog(context,
+                          'Phone number must start with +7 or 8 and contain 11 digits.');
                     } else if (!_isPasswordValid(password)) {
                       _showErrorDialog(context,
                           'Password must be at least 8 characters long, include a digit and a special character.');
@@ -232,6 +416,10 @@ class SignInSignUpScreen extends StatelessWidget {
                         if (rememberMe) {
                           SharedPreferences prefs =
                               await SharedPreferences.getInstance();
+						  await prefs.setString('email', email);
+                          await prefs.setString('phone', phone);
+                          await prefs.setString('password', password);
+                          await prefs.setBool('isDriver', isDriver);
                           await prefs.setBool('rememberMe', true);
                         }
 
@@ -243,9 +431,21 @@ class SignInSignUpScreen extends StatelessWidget {
                       } catch (e) {
                         _showErrorDialog(context, 'Error during sign up: $e');
                       }
+
+                      Navigator.pop(context);
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (_) => ProfileScreen()),
+                      );
                     }
                   },
-                  child: const Text('Enter'),
+                  child: Text('Enter', style: TextStyle(color: Colors.green)),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Text('Cancel', style: TextStyle(color: Colors.red)),
                 ),
               ],
             );
@@ -255,6 +455,13 @@ class SignInSignUpScreen extends StatelessWidget {
     );
   }
 
+  // Phone validation
+  bool _isPhoneValid(String phone) {
+    final RegExp phoneRegex = RegExp(r'^(\+7|8)\d{10}$');
+    return phoneRegex.hasMatch(phone);
+  }
+
+  // Email validation
   bool _isEmailValid(String email) {
     final RegExp emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
     return emailRegex.hasMatch(email);
@@ -266,20 +473,43 @@ class SignInSignUpScreen extends StatelessWidget {
     bool hasSpecialChar = password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
     return hasDigit && hasSpecialChar;
   }
-  
+
   void _showErrorDialog(BuildContext context, String message) {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Error'),
-          content: Text(message),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          backgroundColor:
+              Colors.blue.shade50.withOpacity(0.9), // Styled dialog background
+          title: Center(
+            child: Text(
+              'Error',
+              style: TextStyle(
+                color: Colors.blue.shade900,
+                fontWeight: FontWeight.bold,
+                fontSize: 20, // Font size for error title
+              ),
+            ),
+          ),
+          content: Text(
+            message,
+            style: TextStyle(
+              color: Colors.blue.shade700,
+              fontSize: 16,
+            ),
+            textAlign: TextAlign.center,
+          ),
           actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('OK'),
+            Center(
+              child: TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: Text('OK', style: TextStyle(color: Colors.red)),
+              ),
             ),
           ],
         );

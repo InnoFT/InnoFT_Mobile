@@ -332,8 +332,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  // Метод для показа диалога с деталями поездки
-  void _showTripDetailsDialog(BuildContext context, Map<String, String> trip) {
+  // Виджет для активных поездок с возможностью завершить поездку
+  Widget _buildTripItem(Map<String, String> trip) {
+    return ListTile(
+      title: Text('From ${trip['from']} to ${trip['to']}'),
+      subtitle: Text('Departure: ${trip['departure']}'),
+      trailing: trip['driver'] == 'your'
+          ? Text('(your)', style: TextStyle(color: Colors.blue))
+          : null,
+      onTap: () => _showTripDetailsDialog(trip),
+    );
+  }
+
+  // Диалог с деталями поездки и кнопкой Finish для ваших поездок
+  void _showTripDetailsDialog(Map<String, String> trip) {
     showDialog(
       context: context,
       builder: (context) {
@@ -348,8 +360,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               Text('Departure: ${trip['departure']}'),
               Text('Arrival: ${trip['arrival']}'),
               Text('Seats: ${trip['availableSeats']}/${trip['totalSeats']}'),
-              Text('Driver: ${trip['driverName']}'),
-              Text('Driver Phone: ${trip['driverPhone']}'),
+              Text('Driver: ${trip['driver']}'),
             ],
           ),
           actions: [
@@ -366,19 +377,30 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               },
               child: const Text('Cancel'),
             ),
+            if (trip['driver'] == 'your') ...[
+              TextButton(
+                onPressed: () {
+                  ref
+                      .read(activeTripsProvider.notifier)
+                      .removeTrip(trip); // Удаляем из активных
+                  ref.read(tripHistoryProvider.notifier).addTripToHistory(
+                      '${trip['from']} to ${trip['to']}'); // Добавляем в историю
+                  Navigator.pop(context);
+                },
+                child: Text('Finish'),
+              ),
+            ],
           ],
         );
       },
     );
   }
 
-  // Проверка email на правильность
   bool isEmailValid(String email) {
     final RegExp emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
     return emailRegex.hasMatch(email);
   }
 
-  // Проверка телефона на правильность
   bool isPhoneValid(String phone) {
     final RegExp phoneRegex = RegExp(r'^(\+7|8)\d{10}$');
     return phoneRegex.hasMatch(phone);
