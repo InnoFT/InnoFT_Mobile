@@ -6,10 +6,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:inno_ft/screens/signin_signup_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
+import '../components/theme_toggle_switch.dart';
 import '../components/trip_provider.dart';
-import '../screens/settings_screen.dart';
 import '../screens/create_trip_screen.dart';
-import '../screens/find_trip_screen.dart';
+import '../screens/find_trip_screen.dart';// Import the ThemeToggleSwitch
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -155,31 +155,32 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final activeTrips = ref
-        .watch(activeTripsProvider); // Получаем активные поездки из провайдера
-    final tripHistory = ref
-        .watch(tripHistoryProvider); // Получаем историю поездок из провайдера
+    final activeTrips = ref.watch(activeTripsProvider);
+    final tripHistory = ref.watch(tripHistoryProvider);
 
     return DefaultTabController(
-      length: 4,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Profile Screen'),
           bottom: const TabBar(
             tabs: [
-              Tab(text: 'Settings', icon: Icon(Icons.settings)),
               Tab(text: 'Profile', icon: Icon(Icons.person)),
               Tab(text: 'Create Trip', icon: Icon(Icons.add_circle)),
               Tab(text: 'Find Trip', icon: Icon(Icons.search)),
             ],
           ),
         ),
-        body: TabBarView(
+        body: Stack(
           children: [
-            SettingsScreen(),
-            _buildProfileContent(context),
-            CreateTripScreen(),
-            FindTripScreen(),
+            TabBarView(
+              children: [
+                _buildProfileContent(context),
+                CreateTripScreen(),
+                FindTripScreen(),
+              ],
+            ),
+            ThemeToggleSwitch(),
           ],
         ),
       ),
@@ -330,7 +331,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  // Виджет для активных поездок с возможностью завершить поездку
   Widget _buildTripItem(Map<String, String> trip) {
     return ListTile(
       title: Text('From ${trip['from']} to ${trip['to']}'),
@@ -493,5 +493,140 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         },
       );
     }
+  }
+  void _showCurrentPasswordDialog(BuildContext context) {
+    TextEditingController currentPasswordController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Enter Current Password'),
+          content: TextField(
+            controller: currentPasswordController,
+            decoration: InputDecoration(labelText: 'Current Password'),
+            obscureText: true,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Закрываем диалог
+              },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                // Проверка пароля (заглушка для серверной проверки)
+                if (_checkCurrentPassword(currentPasswordController.text)) {
+                  Navigator.pop(context); // Закрываем диалог с текущим паролем
+                  _showNewPasswordDialog(context); // Открываем диалог для нового пароля
+                } else {
+                  _showErrorDialog(context, 'Incorrect current password.');
+                }
+              },
+              child: Text('Enter'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  bool _checkCurrentPassword(String currentPassword) {
+    // Здесь будет логика проверки пароля на сервере, пока возвращаем true для демонстрации
+    return currentPassword == "123456"; // Заглушка: текущий пароль - "123456"
+  }
+
+  // Диалог для ввода нового пароля
+  void _showNewPasswordDialog(BuildContext context) {
+    TextEditingController newPasswordController = TextEditingController();
+    TextEditingController confirmPasswordController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Enter New Password'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: newPasswordController,
+                decoration: InputDecoration(labelText: 'New Password'),
+                obscureText: true,
+              ),
+              TextField(
+                controller: confirmPasswordController,
+                decoration: InputDecoration(labelText: 'Confirm Password'),
+                obscureText: true,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Закрываем диалог
+              },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                if (_validateNewPassword(context, newPasswordController.text, confirmPasswordController.text)) {
+                  // Логика для изменения пароля (заглушка)
+                  Navigator.pop(context); // Закрываем диалог
+                }
+              },
+              child: Text('Change'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+  bool _validateNewPassword(BuildContext context, String newPassword, String confirmPassword) {
+    if (newPassword.isEmpty || confirmPassword.isEmpty) {
+      _showErrorDialog(context, 'New password fields cannot be empty.');
+      return false;
+    }
+
+    if (newPassword != confirmPassword) {
+      _showErrorDialog(context, 'Passwords do not match.');
+      return false;
+    }
+
+    if (!_isPasswordValid(newPassword)) {
+      _showErrorDialog(context, 'Password must be at least 8 characters long and include a digit and a special character.');
+      return false;
+    }
+
+    return true;
+  }
+
+  // Проверка формата пароля
+  bool _isPasswordValid(String password) {
+    if (password.length < 8) return false;
+    bool hasDigit = password.contains(RegExp(r'\d'));
+    bool hasSpecialChar = password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
+    return hasDigit && hasSpecialChar;
+  }
+
+  void _showErrorDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Error'),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
