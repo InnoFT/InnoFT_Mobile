@@ -9,7 +9,7 @@ import 'dart:io';
 import '../components/theme_toggle_switch.dart';
 import '../components/trip_provider.dart';
 import '../screens/create_trip_screen.dart';
-import '../screens/find_trip_screen.dart';// Import the ThemeToggleSwitch
+import '../screens/find_trip_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -162,17 +162,39 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Profile Screen'),
+          title: const Text('InnoFellowTravelers'),
+          backgroundColor: Colors.blue.shade700,
           bottom: const TabBar(
+            indicatorColor: Colors.white,
             tabs: [
-              Tab(text: 'Profile', icon: Icon(Icons.person)),
-              Tab(text: 'Create Trip', icon: Icon(Icons.add_circle)),
-              Tab(text: 'Find Trip', icon: Icon(Icons.search)),
+              Tab(
+                  text: 'Profile',
+                  icon: Icon(
+                    Icons.person,
+                    color: Colors.white,
+                  )),
+              Tab(
+                  text: 'Create Trip',
+                  icon: Icon(
+                    Icons.add_circle,
+                    color: Colors.white,
+                  )),
+              Tab(
+                  text: 'Find Trip',
+                  icon: Icon(
+                    Icons.search,
+                    color: Colors.white,
+                  )),
             ],
           ),
         ),
         body: Stack(
           children: [
+            Positioned.fill(
+              child: Container(
+                color: Colors.blue.shade900.withOpacity(0.8),
+              ),
+            ),
             TabBarView(
               children: [
                 _buildProfileContent(context),
@@ -195,19 +217,31 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Edit $field'),
+          backgroundColor: Colors.white,
+          title: Text('Edit $field',
+              style: TextStyle(color: Colors.blue.shade700)),
           content: TextField(
             controller: controller,
-            decoration: InputDecoration(labelText: 'Enter new $field'),
+            decoration: InputDecoration(
+              labelText: 'Enter new $field',
+              labelStyle: const TextStyle(color: Colors.white),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.blue.shade700),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.blue.shade700, width: 2),
+              ),
+            ),
           ),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: const Text('Cancel'),
+              child:
+                  const Text('Cancel', style: TextStyle(color: Colors.white)),
             ),
-            TextButton(
+            ElevatedButton(
               onPressed: () {
                 if (field == 'name' && controller.text.isEmpty) {
                   showErrorDialog(context, 'Name cannot be empty.');
@@ -223,7 +257,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   return;
                 }
 
-                // Сохраняем изменения
                 if (field == 'name') {
                   setState(() {
                     userName = controller.text;
@@ -239,9 +272,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     userPhone = controller.text;
                   });
                 }
-                _updateUserProfile(userName, userEmail);
+                _updateUserProfile(userName, userPhone);
                 Navigator.pop(context);
               },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue.shade700,
+              ),
               child: const Text('Save'),
             ),
           ],
@@ -276,7 +312,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 TextButton(
                   onPressed: _pickImage,
-                  child: const Text('Change Photo'),
+                  child: const Text(
+                    'Change Photo',
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
               ],
             ),
@@ -294,12 +333,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           const SizedBox(height: 20),
           Text(
             'Rating: $userRating',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
           const SizedBox(height: 20),
           const Text(
             'Active Trips:',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
           ),
           if (activeTrips.isEmpty)
             const Text('No active trips available.')
@@ -308,7 +352,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           const SizedBox(height: 20),
           const Text(
             'Trip History:',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
           ),
           if (tripHistory.isEmpty)
             const Text('No trip history available.')
@@ -324,6 +369,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
           ElevatedButton(
             onPressed: _showClearHistoryDialog,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue.shade900,
+            ),
             child: const Text('Clear History'),
           ),
         ],
@@ -336,13 +384,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       title: Text('From ${trip['from']} to ${trip['to']}'),
       subtitle: Text('Departure: ${trip['departure']}'),
       trailing: trip['driver'] == 'your'
-          ? Text('(your)', style: TextStyle(color: Colors.blue))
+          ? Text('(your)', style: TextStyle(color: Colors.white))
           : null,
       onTap: () => _showTripDetailsDialog(trip),
     );
   }
 
-  // Диалог с деталями поездки и кнопкой Finish для ваших поездок
   void _showTripDetailsDialog(Map<String, String> trip) {
     showDialog(
       context: context,
@@ -378,11 +425,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             if (trip['driver'] == 'your') ...[
               TextButton(
                 onPressed: () {
+                  ref.read(activeTripsProvider.notifier).removeTrip(trip);
                   ref
-                      .read(activeTripsProvider.notifier)
-                      .removeTrip(trip); // Удаляем из активных
-                  ref.read(tripHistoryProvider.notifier).addTripToHistory(
-                      '${trip['from']} to ${trip['to']}'); // Добавляем в историю
+                      .read(tripHistoryProvider.notifier)
+                      .addTripToHistory('${trip['from']} to ${trip['to']}');
                   Navigator.pop(context);
                 },
                 child: Text('Finish'),
@@ -412,10 +458,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         children: [
           Text(
             '$label: $value',
-            style: const TextStyle(fontSize: 16),
+            style: const TextStyle(fontSize: 16, color: Colors.white),
           ),
           IconButton(
-            icon: const Icon(Icons.edit),
+            icon: const Icon(Icons.edit, color: Colors.white),
             onPressed: onPressed,
           ),
         ],
@@ -428,6 +474,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
+          backgroundColor: Colors.white,
           title: const Text('Clear Trip History'),
           content:
               const Text('Are you sure you want to clear your trip history?'),
@@ -436,64 +483,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: const Text('Cancel'),
+              child:
+                  const Text('Cancel', style: TextStyle(color: Colors.white)),
             ),
-            TextButton(
+            ElevatedButton(
               onPressed: () {
                 ref.read(tripHistoryProvider.notifier).clearHistory();
                 Navigator.pop(context);
               },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue.shade900,
+              ),
               child: const Text('Clear'),
             ),
           ],
         );
       },
     );
-    List<Widget> _buildActiveTrips(List<String> trips) {
-      if (trips.isEmpty) {
-        return [const Text('No active trips available.')];
-      }
-      return trips.map((trip) => ListTile(title: Text(trip))).toList();
-    }
-
-    List<Widget> _buildTripHistory(List<String> trips) {
-      if (trips.isEmpty) {
-        return [const Text('No trip history available.')];
-      }
-      return trips.map((trip) => ListTile(title: Text(trip))).toList();
-    }
-
-    // Диалог подтверждения для очистки истории
-    void _showClearHistoryDialog() {
-      showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: const Text('Clear Trip History'),
-            content:
-                const Text('Are you sure you want to clear your trip history?'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () {
-                  setState(() {
-                    tripHistory = [];
-                  });
-                  Navigator.pop(context);
-                },
-                child: const Text('Clear'),
-              ),
-            ],
-          );
-        },
-      );
-    }
   }
+
   void _showCurrentPasswordDialog(BuildContext context) {
     TextEditingController currentPasswordController = TextEditingController();
 
@@ -510,16 +518,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(context); // Закрываем диалог
+                Navigator.pop(context);
               },
               child: Text('Cancel'),
             ),
             TextButton(
               onPressed: () {
-                // Проверка пароля (заглушка для серверной проверки)
                 if (_checkCurrentPassword(currentPasswordController.text)) {
-                  Navigator.pop(context); // Закрываем диалог с текущим паролем
-                  _showNewPasswordDialog(context); // Открываем диалог для нового пароля
+                  Navigator.pop(context);
+                  _showNewPasswordDialog(context);
                 } else {
                   _showErrorDialog(context, 'Incorrect current password.');
                 }
@@ -533,11 +540,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   bool _checkCurrentPassword(String currentPassword) {
-    // Здесь будет логика проверки пароля на сервере, пока возвращаем true для демонстрации
-    return currentPassword == "123456"; // Заглушка: текущий пароль - "123456"
+    return currentPassword == "123456";
   }
 
-  // Диалог для ввода нового пароля
   void _showNewPasswordDialog(BuildContext context) {
     TextEditingController newPasswordController = TextEditingController();
     TextEditingController confirmPasswordController = TextEditingController();
@@ -565,15 +570,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(context); // Закрываем диалог
+                Navigator.pop(context);
               },
               child: Text('Cancel'),
             ),
             TextButton(
               onPressed: () {
-                if (_validateNewPassword(context, newPasswordController.text, confirmPasswordController.text)) {
-                  // Логика для изменения пароля (заглушка)
-                  Navigator.pop(context); // Закрываем диалог
+                if (_validateNewPassword(context, newPasswordController.text,
+                    confirmPasswordController.text)) {
+                  Navigator.pop(context);
                 }
               },
               child: Text('Change'),
@@ -583,7 +588,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       },
     );
   }
-  bool _validateNewPassword(BuildContext context, String newPassword, String confirmPassword) {
+
+  bool _validateNewPassword(
+      BuildContext context, String newPassword, String confirmPassword) {
     if (newPassword.isEmpty || confirmPassword.isEmpty) {
       _showErrorDialog(context, 'New password fields cannot be empty.');
       return false;
@@ -595,14 +602,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
 
     if (!_isPasswordValid(newPassword)) {
-      _showErrorDialog(context, 'Password must be at least 8 characters long and include a digit and a special character.');
+      _showErrorDialog(context,
+          'Password must be at least 8 characters long and include a digit and a special character.');
       return false;
     }
 
     return true;
   }
 
-  // Проверка формата пароля
   bool _isPasswordValid(String password) {
     if (password.length < 8) return false;
     bool hasDigit = password.contains(RegExp(r'\d'));
