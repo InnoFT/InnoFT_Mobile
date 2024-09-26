@@ -31,10 +31,20 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
   }
 
   Future<void> _determinePosition() async {
-    Position position = await Geolocator.getCurrentPosition();
-    setState(() {
-      userLocation = LatLng(position.latitude, position.longitude);
-    });
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      setState(() {
+        userLocation = LatLng(position.latitude, position.longitude);
+      });
+    } catch (e) {
+      const double defaultLatitude = 55.75229643707189;
+      const double defaultLongitude = 48.74462643352501;
+      setState(() {
+        userLocation = const LatLng(defaultLatitude, defaultLongitude);
+      });
+    }
   }
 
   void _onMapTapped(LatLng coordinates) {
@@ -73,7 +83,7 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
   Future<void> _getRouteAndDrawPolyline() async {
     if (startPoint == null || destinationPoint == null) return;
 
-    final String apiKey =
+    const String apiKey =
         'pk.eyJ1IjoibGVsb25vdjIzIiwiYSI6ImNtMWlqc2YxbTBtb3EyanMyMDFyYXU2bGMifQ.tk-A8ed40Avnbu_-NXM69g';
     final String url =
         'https://api.mapbox.com/directions/v5/mapbox/driving/${startPoint!.longitude},${startPoint!.latitude};${destinationPoint!.longitude},${destinationPoint!.latitude}?geometries=geojson&access_token=$apiKey';
@@ -96,10 +106,31 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
     }
   }
 
-  void _createTrip() {
+  Future<void> _createTrip() async {
     if (startPoint == null || destinationPoint == null) {
       _showErrorDialog("Please select both pickup and destination points.");
       return;
+    }
+
+        final url = Uri.parse('http://localhost:8069/tips/create');
+    try {
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "total_seats": availableSeatsController.value,
+          "price_per_seat": priceController.value,
+          "start_latitude": startPoint!.latitude,
+          "start_longitude": startPoint!.longitude,
+          "end_latitude": destinationPoint!.latitude,
+          "end_longitude": destinationPoint!.longitude,
+        }),
+      );
+      if (response.statusCode != 200) {
+        _showErrorDialog('Error creating trip: ${response.statusCode}');
+      }
+    } catch (e) {
+      _showErrorDialog('Error creating trip: $e');
     }
   }
 
