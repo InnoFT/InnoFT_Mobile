@@ -36,6 +36,7 @@ func main() {
 	routes.SetupUserRouter(r)
 	routes.SetupAuthRouter(r)
 	routes.SetupTripRouter(r)
+	routes.SetupVehicleRouter(r)
 
 	httpServer := &http.Server{
 		Addr:    ":8069",

@@ -4,9 +4,10 @@ import (
 	"FlutterBackend/initializers"
 	"FlutterBackend/models"
 	"FlutterBackend/services"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
 )
 
 func AttachVehicle(c *gin.Context) {
@@ -32,12 +33,6 @@ func AttachVehicle(c *gin.Context) {
 		return
 	}
 
-	carPhoto, err := c.FormFile("car_photo")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Car photo is required"})
-		return
-	}
-
 	vehicle := models.Vehicle{
 		DriverID:       driverID.(uint),
 		LicensePlate:   licensePlate,
@@ -47,13 +42,14 @@ func AttachVehicle(c *gin.Context) {
 		CarPic:         "",
 	}
 
-	carPhotoPath, err := services.SaveCarPhoto(c, vehicle, carPhoto)
+	/*carPhotoPath, err := services.SaveCarPhoto(c, vehicle, carPhoto)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save car photo"})
 		return
 	}
 
 	vehicle.CarPic = carPhotoPath
+	*/
 
 	if err := initializers.DB.Create(&vehicle).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to attach vehicle"})

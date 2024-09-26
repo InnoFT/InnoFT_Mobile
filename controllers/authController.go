@@ -76,7 +76,18 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Registration successful"})
+	if err := initializers.DB.Where("email = ?", input.Email).First(&user).Error; err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+		return
+	}
+
+	token, err := utils.GenerateJWT(user)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Registration successful", "token": token})
 }
 
 func Login(c *gin.Context) {
@@ -142,7 +153,7 @@ func Login(c *gin.Context) {
 		"user_id": user.UserID,
 	}).Info("User logged in successfully")
 
-	c.JSON(http.StatusOK, gin.H{"user": user.Name, "token": token})
+	c.JSON(http.StatusOK, gin.H{"user": user.Name, "token": token, "role": user.Role})
 }
 
 func Logout(c *gin.Context) {
