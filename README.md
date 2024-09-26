@@ -1,6 +1,6 @@
 # InnoFT Mobile
 
-Welcome to the InnoFT Mobile repository! This project is a [brief project description]. Below, you’ll find detailed instructions for setting up and using the application, as well as screenshots and GIFs demonstrating its features.
+Welcome to the InnoFT Mobile repository! This project is an app to find trip mates for all your trips. Below, you’ll find detailed instructions for setting up and using the application, as well as screenshots and GIFs demonstrating its features.
 
 ## Table of Contents
 - [Screenshots and GIFs](#screenshots-and-gifs)
