@@ -19,13 +19,13 @@ class _ThemeToggleSwitchState extends ConsumerState<ThemeToggleSwitch> {
         // Sliding theme switch container
         AnimatedPositioned(
           duration: Duration(milliseconds: 300),
-          left: _isExpanded ? 0 : -160, // Slide most of the container offscreen but leave the arrow visible
+          left: _isExpanded ? 0 : -180, // Slide offscreen when collapsed
           top: MediaQuery.of(context).size.height / 2 - 50, // Center vertically
           child: Container(
             width: 200, // Fixed width for the container
             padding: EdgeInsets.all(8.0), // Add padding for better appearance
             decoration: BoxDecoration(
-              color: Colors.white, // Background color for better visibility
+              color: isDarkTheme ? Colors.blue.shade900 : Colors.blue.shade200, // Background color
               borderRadius: BorderRadius.circular(10), // Rounded corners
               boxShadow: [
                 BoxShadow(
@@ -45,7 +45,7 @@ class _ThemeToggleSwitchState extends ConsumerState<ThemeToggleSwitch> {
                     GestureDetector(
                       onTap: () {
                         setState(() {
-                          _isExpanded = !_isExpanded; // Toggle the expansion only when arrow is clicked
+                          _isExpanded = !_isExpanded; // Toggle the expansion
                         });
                       },
                       child: Icon(
@@ -53,9 +53,21 @@ class _ThemeToggleSwitchState extends ConsumerState<ThemeToggleSwitch> {
                             ? Icons.arrow_back_ios
                             : Icons.arrow_forward_ios, // Arrow icon
                         size: 16,
+                        color: isDarkTheme ? Colors.white : Colors.black,
                       ),
                     ),
                   ],
+                ),
+                // "Dark theme" label
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Text(
+                    'Dark theme',
+                    style: TextStyle(
+                      color: isDarkTheme ? Colors.white : Colors.black, // Text color based on theme
+                      fontSize: 16,
+                    ),
+                  ),
                 ),
                 // Switch to toggle theme (Doesn't collapse the panel on interaction)
                 Switch(
@@ -63,24 +75,13 @@ class _ThemeToggleSwitchState extends ConsumerState<ThemeToggleSwitch> {
                   onChanged: (value) {
                     ref.read(themeNotifierProvider.notifier).toggleTheme(); // Toggle theme
                   },
+                  activeColor: Colors.white,
+                  activeTrackColor: Colors.blueAccent, // Customize switch color in dark mode
                 ),
               ],
             ),
           ),
         ),
-
-        // Detect clicks outside the theme toggle to close it
-        if (_isExpanded)
-          Positioned.fill(
-            child: GestureDetector(
-              behavior: HitTestBehavior.translucent,
-              onTap: () {
-                setState(() {
-                  _isExpanded = false; // Collapse when clicking outside the box
-                });
-              },
-            ),
-          ),
       ],
     );
   }

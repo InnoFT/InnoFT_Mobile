@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart'; // Импортируем Riverpod
-import '../components/trip_provider.dart'; // Импортируем провайдер для активных поездок
+import 'package:flutter_riverpod/flutter_riverpod.dart'; 
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
+import '../components/trip_provider.dart';
 
 class FindTripScreen extends ConsumerStatefulWidget {
+  const FindTripScreen({super.key});
+
   @override
   _FindTripScreenState createState() => _FindTripScreenState();
 }
@@ -11,10 +16,9 @@ class _FindTripScreenState extends ConsumerState<FindTripScreen> {
   TextEditingController fromController = TextEditingController();
   TextEditingController toController = TextEditingController();
 
-  List<Map<String, String>> availableTrips = [];
+  List<Map<String, dynamic>> availableTrips = [];
 
-  // Метод для отправки данных на сервер (пока заглушка)
-  void _findTrips() {
+  Future<void> _findTrips() async {
     String from = fromController.text;
     String to = toController.text;
 
@@ -23,47 +27,42 @@ class _FindTripScreenState extends ConsumerState<FindTripScreen> {
       return;
     }
 
-    // Заглушка для получения списка поездок с сервера
-    setState(() {
-      availableTrips = [
-        {
-          'from': from,
-          'to': to,
-          'departure': '10:00 AM',
-          'arrival': '12:00 PM',
-          'availableSeats': '3',
-          'totalSeats': '4',
-          'driverName': 'John Doe',
-          'driverPhone': '+71234567890',
-        },
-        {
-          'from': from,
-          'to': to,
-          'departure': '1:00 PM',
-          'arrival': '3:00 PM',
-          'availableSeats': '2',
-          'totalSeats': '4',
-          'driverName': 'Jane Smith',
-          'driverPhone': '+79876543210',
-        },
-      ];
-    });
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final authToken = prefs.getString('Authorization');
+
+    try {
+      final response = await http.get(
+        Uri.parse('http://localhost:8069/trips/available?start_city=$from&end_city=$to'), headers: {"Content-Type": "application/json", "Authorization": authToken!},
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        print(data);
+        setState(() {
+          availableTrips = List<Map<String, dynamic>>.from(data['trips']);
+        });
+      } else {
+        _showErrorDialog('Failed to fetch trips.');
+      }
+    } catch (e) {
+      _showErrorDialog('Error occurred: $e');
+    }
   }
 
-  // Метод для показа диалога с ошибкой
+  // Error dialog
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Error'),
+          title: const Text('Error'),
           content: Text(message),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: Text('OK'),
+              child: const Text('OK'),
             ),
           ],
         );
@@ -71,39 +70,35 @@ class _FindTripScreenState extends ConsumerState<FindTripScreen> {
     );
   }
 
-  // Метод для показа диалога с деталями поездки
-  void _showTripDetailsDialog(Map<String, String> trip) {
+  void _showTripDetailsDialog(Map<String, dynamic> trip) {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Trip Details'),
+          title: const Text('Trip Details'),
           content: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('From: ${trip['from']}'),
-              Text('To: ${trip['to']}'),
-              Text('Departure: ${trip['departure']}'),
-              Text('Arrival: ${trip['arrival']}'),
+              Text('From: ${trip['startLocation']['city']}'),
+              Text('To: ${trip['endLocation']['city']}'),
+              Text('Departure: ${trip['departureTime']}'),
               Text('Seats: ${trip['availableSeats']}/${trip['totalSeats']}'),
-              Text('Driver: ${trip['driverName']}'),
-              Text('Driver Phone: ${trip['driverPhone']}'),
+              Text('Driver: ${trip['driver']['name']}'),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(context); // Закрываем диалог
+                Navigator.pop(context); 
               },
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
             ),
             TextButton(
               onPressed: () {
-                _bookTrip(trip); // Бронируем поездку
-                Navigator.pop(context); // Закрываем диалог
+                Navigator.pop(context); 
               },
-              child: Text('Book'),
+              child: const Text('Book'),
             ),
           ],
         );
@@ -111,17 +106,17 @@ class _FindTripScreenState extends ConsumerState<FindTripScreen> {
     );
   }
 
-  // Метод для бронирования поездки
+  // Book trip method
   void _bookTrip(Map<String, String> trip) {
-    ref.read(activeTripsProvider.notifier).addTrip(trip); // Добавляем поездку в провайдер активных поездок
-    print('Booking trip from ${trip['from']} to ${trip['to']}');
+    ref.read(activeTripsProvider.notifier).addTrip(trip);
+    print('Booking trip from ${trip['startLocation']} to ${trip['endLocation']}');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Find a Trip'),
+        title: const Text('Find a Trip'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -133,42 +128,41 @@ class _FindTripScreenState extends ConsumerState<FindTripScreen> {
                 Expanded(
                   child: TextField(
                     controller: fromController,
-                    decoration: InputDecoration(labelText: 'From'),
+                    decoration: const InputDecoration(labelText: 'From'),
                   ),
                 ),
-                Icon(Icons.arrow_forward, size: 24),
+                const Icon(Icons.arrow_forward, size: 24),
                 Expanded(
                   child: TextField(
                     controller: toController,
-                    decoration: InputDecoration(labelText: 'To'),
+                    decoration: const InputDecoration(labelText: 'To'),
                   ),
                 ),
               ],
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             Center(
               child: ElevatedButton(
-                onPressed: _findTrips, // Поиск поездок
-                child: Text('Find'),
+                onPressed: _findTrips, // Fetch trips from API
+                child: const Text('Find'),
               ),
             ),
-            SizedBox(height: 20),
-
+            const SizedBox(height: 20),
             if (availableTrips.isNotEmpty) ...[
-              Text(
+              const Text(
                 'Available Trips:',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Expanded(
                 child: ListView.builder(
                   itemCount: availableTrips.length,
                   itemBuilder: (context, index) {
                     final trip = availableTrips[index];
                     return ListTile(
-                      title: Text('From ${trip['from']} to ${trip['to']}'),
-                      subtitle: Text('Departure: ${trip['departure']}'),
-                      onTap: () => _showTripDetailsDialog(trip), // Открываем диалог с деталями
+                      title: Text('From ${trip['startLocation']['city']} to ${trip['endLocation']['city']}'),
+                      subtitle: Text('Departure: ${trip['departureTime']}'),
+                      onTap: () => _showTripDetailsDialog(trip), // Show trip details
                     );
                   },
                 ),

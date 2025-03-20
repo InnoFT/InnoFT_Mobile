@@ -11,7 +11,7 @@ class AuthController {
     
     final response = await http.post(
       url,
-      headers: {"Content-Type": "application/json"},
+      headers: {"Content-Type": "application/json", "Access-Control-Allow-Origin": "true"},
       body: jsonEncode({"email": email, "password": password}),
     );
     
@@ -47,6 +47,14 @@ class AuthController {
     if (response.statusCode != 200) {
       final errorMessage = jsonDecode(response.body)['error'];
       throw Exception(errorMessage);
+    }
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final token = data['token'];
+      
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString(authTokenKey, token);
     }
   }
 
